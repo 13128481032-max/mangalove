@@ -1,0 +1,241 @@
+{
+  "_comment": "系统说明：{npc_name}会被替换为当前交互男主的名字，{player_name}为女主名字",
+  
+  "tutorial": [
+    {
+      "id": "intro_01",
+      "type": "dialogue",
+      "text": "这是我搬进这个工作室的第一天。虽然现在我还只是个默默无闻的小画手，但我发誓，总有一天我的漫画会改编成动画！",
+      "choices": [
+        { "text": "拿起画笔，开始奋斗！", "next_event": "intro_02" }
+      ]
+    },
+    {
+      "id": "intro_02",
+      "type": "dialogue",
+      "text": "首先，我需要规划每天的行动。画画会消耗【精力】但能赚取【金钱】和【粉丝】。精力不够时记得休息。",
+      "effects": { "energy": 100, "money": 500 }
+    }
+  ],
+
+  "daily_work": [
+    {
+      "id": "work_normal",
+      "weight": 50,
+      "text": "今天画得很顺手，分镜一气呵成。",
+      "effects": { "stress": -5, "art_exp": 10 }
+    },
+    {
+      "id": "work_block",
+      "weight": 20,
+      "text": "卡文了...在数位板前坐了三个小时，只画了一个火柴人。",
+      "effects": { "stress": 10, "energy": -10 }
+    },
+    {
+      "id": "work_viral",
+      "weight": 5,
+      "text": "随手摸鱼的一张图在社交网络上爆火了！涨粉了！",
+      "effects": { "fans": 500, "money": 200 }
+    }
+  ],
+
+  "encounters": [
+   {
+      "id": "first_meet_sunny",
+      "trigger": "special",
+      "title": "阳光下的碰撞",
+      "text": "你在公园写生时，一只金毛犬突然扑进了你怀里。\n{npc_name}: “抱歉抱歉！它太喜欢漂亮姐姐了！”\n面前的男生笑得比阳光还灿烂，挠着头向你道歉。",
+      "choices": [{ "text": "没关系，它很可爱", "effects": { "art": 1, "charm": 1 } }]
+    },
+    {
+      "id": "first_meet_gloomy",
+      "trigger": "special",
+      "title": "雨夜的伞",
+      "text": "突如其来的暴雨把你困在了屋檐下。旁边伸过来一把黑色的伞。\n{npc_name}: “……去哪？我送你。”\n雨水顺着他苍白的侧脸滑落，他的眼神像深潭一样幽静。",
+      "choices": [{ "text": "谢谢……(有些紧张)", "effects": { "story": 1 } }]
+    },
+    {
+      "id": "first_meet_arrogant",
+      "trigger": "special",
+      "title": "糟糕的初遇",
+      "text": "你急着赶路，不小心撞翻了路人的咖啡。\n{npc_name}: “啧，走路不长眼吗？这可是限量版衬衫。”\n男人皱着眉清理污渍，语气里满是不耐烦。",
+      "choices": [{ "text": "立刻道歉赔偿", "effects": { "money": -50 } }]
+    },
+    {
+      "id": "first_meet_gentle",
+      "trigger": "special",
+      "title": "图书馆插曲",
+      "text": "你伸手去拿书架顶端的书，却怎么也够不着。一只修长的手帮你取了下来。\n{npc_name}: “是这本吗？很有品味的选择。”\n他微笑着递给你，声音温润如玉。",
+      "choices": [{ "text": "脸红道谢", "effects": { "charm": 2 } }]
+    },
+    {
+      "id": "meet_new_guy",
+      "type": "dialogue",
+      "trigger": "go_out",
+      "condition": "random_npc_generation",
+      "text": "外出采风的时候，不小心撞到了一个人。\n男人捡起地上的画稿，眼神在上面停留了一瞬。\n“线条不错。”他低声评价道。",
+      "choices": [
+        { "text": "谢谢夸奖（礼貌）", "reaction": "normal" },
+        { "text": "那是当然！（自信）", "reaction": "interested" }
+      ]
+    },
+    {
+      "id": "date_cafe",
+      "type": "dialogue",
+      "trigger": "go_out",
+      "text": "和 {npc_name} 在咖啡馆见面。他今天似乎特意打扮了一下。",
+      "choices": [
+        { "text": "夸他很帅", "affection_change": 10 },
+        { "text": "聊新画的漫画", "affection_change": 5 }
+      ]
+    },
+    {
+      "id": "first_meet_stoic",
+      "trigger": "special",
+      "title": "冰山一角",
+      "text": "你在美术馆临摹名画时，不小心挡住了一个人的视线。\n{npc_name}: “……让开。”\n男人穿着考究的三件套西装，眼神清冷，仿佛在看一团空气。",
+      "choices": [{ "text": "不好意思(赶紧挪开)", "effects": { "art": 1 } }]
+    },
+    {
+      "id": "first_meet_flirty",
+      "trigger": "special",
+      "title": "午夜霓虹",
+      "text": "深夜的便利店门口，一个满身酒气的男人靠了过来。\n{npc_name}: “美丽的小姐，能借个火吗？”\n他虽然笑着，那双桃花眼里却看不到一丝醉意。",
+      "choices": [{ "text": "我不抽烟...", "effects": { "charm": 1 } }]
+    },
+    {
+      "id": "first_meet_stoic",
+      "trigger": "special",
+      "title": "冰山一角",
+      "text": "你在美术馆临摹名画时，不小心挡住了一个人的视线。\n{npc_name}: “……让开。”\n男人穿着考究的三件套西装，眼神清冷，仿佛在看一团空气。",
+      "choices": [{ "text": "不好意思(赶紧挪开)", "effects": { "art": 1 } }]
+    },
+    {
+      "id": "first_meet_flirty",
+      "trigger": "special",
+      "title": "午夜霓虹",
+      "text": "深夜的便利店门口，一个满身酒气的男人靠了过来。\n{npc_name}: “美丽的小姐，能借个火吗？”\n他虽然笑着，那双桃花眼里却看不到一丝醉意。",
+      "choices": [{ "text": "我不抽烟...", "effects": { "charm": 1 } }]
+    }
+  ],
+
+  "manga_stories": [
+    {
+      "id": "fan_letter_01",
+      "trigger": "work",
+      "title": "📬 读者的心意",
+      "text": "在工作室的信箱里，你发现了一封手写信：\n“太太！看了您的新连载，虽然画风有点独特，但那个男主真的太戳我了！请务必坚持画下去！”\n信封里还夹着一张自制的书签。",
+      "choices": [
+        { "text": "备受鼓舞 (精力+20)", "effects": { "energy": 20 } }
+      ]
+    },
+    {
+      "id": "fan_gift_money",
+      "trigger": "work",
+      "title": "💰 神秘打赏",
+      "text": "你的社交账号收到了一条私信：\n“这一话的分镜太神了，虽然我没多少钱，但这杯奶茶请务必收下！”\n对方转账了 50 元。",
+      "choices": [
+        { "text": "谢谢富婆！(金钱+50)", "effects": { "money": 50 } }
+      ]
+    },
+    {
+      "id": "work_block_01",
+      "trigger": "work",
+      "title": "🤯 创作瓶颈",
+      "text": "不知道为什么，今天手感全无。\n画了擦，擦了画，废纸篓已经堆满了，画布上却还是一片空白。\n脑袋好像生锈了一样……",
+      "choices": [
+        { "text": "死磕到底 (精力-30, 画工+1)", "effects": { "energy": -30, "art": 1 } },
+        { "text": "出门透透气 (结束工作)", "action": "close" }
+      ]
+    },
+    {
+      "id": "viral_topic",
+      "trigger": "work",
+      "title": "🔥 热搜预定",
+      "text": "意外之喜！\n你随手画的一张摸鱼图被大V转发了，评论区瞬间炸开了锅！\n“这是什么神仙画手？”“关注了！”",
+      "choices": [
+        { "text": "趁热打铁 (粉丝+200)", "effects": { "fans": 200 } }
+      ]
+    },
+    {
+      "id": "hater_comment",
+      "trigger": "work",
+      "title": "💔 恶评来袭",
+      "text": "更新后，你习惯性地翻看评论，却看到一条刺眼的留言：\n“画得什么垃圾？人体结构都崩成这样了也好意思发出来？剧情也是毫无逻辑，弃了。”",
+      "choices": [
+        { "text": "深受打击 (精力-20)", "effects": { "energy": -20 } },
+        { "text": "化悲愤为力量 (剧情+2)", "effects": { "story": 2 } }
+      ]
+    },
+    {
+      "id": "npc_visit_night",
+      "trigger": "work",
+      "title": "🌙 深夜探班",
+      "text": "已经是深夜了，你还在赶稿。\n突然，工作室的门被轻轻敲响。\n{npc_name} 提着一个保温盒站在门口：“路过，顺便给你带了点宵夜。……趁热吃。”",
+      "choices": [
+        { "text": "正好饿了！(精力+30)", "effects": { "energy": 30 } },
+        { "text": "分他一半 (好感+5)", "effects": { "dating_with_npc_favor": 5 } }
+      ]
+    },
+    {
+      "id": "editor_rush",
+      "trigger": "work",
+      "title": "📞 夺命连环Call",
+      "text": "编辑的电话打了进来，语气急促：\n“这一话的截稿日要提前！印刷厂那边排期变了！今晚能交稿吗？！”\n看来今晚注定是一个不眠之夜。",
+      "choices": [
+        { "text": "肝了！(精力-50, 金钱+200)", "effects": { "energy": -50, "money": 200 } }
+      ]
+    }
+  ],
+
+  "conflict": {
+    "jealousy_light": [
+      {
+        "id": "jealous_sunny",
+        "text": "{npc_name} 看着你手机里的聊天记录，委屈地撇了撇嘴：“这家伙是谁啊？比我还重要吗？”",
+        "npc_personality": "sunny"
+      },
+      {
+        "id": "jealous_gloomy",
+        "text": "{npc_name} 沉默地站在阴影里，眼镜反着光：“你最近...很忙？身上的香水味换了呢。”",
+        "npc_personality": "gloomy",
+        "effects": { "jealousy_add": 20 }
+      }
+    ],
+    "shuraba": [
+      {
+        "id": "confrontation_01",
+        "text": "修罗场爆发！{npc_name_A} 和 {npc_name_B} 在你家楼下相遇了。空气仿佛凝固了。",
+        "choices": [
+          { "text": "立刻逃跑", "next_event": "break_up_all" },
+          { "text": "试图解释", "next_event": "shuraba_talk" }
+        ]
+      }
+    ]
+  },
+
+  "special_endings": {
+    "gloomy_chain": [
+      {
+        "id": "stalking_start",
+        "trigger_val": 80,
+        "text": "最近总感觉有人在盯着我...放在门口的快递好像被人动过。是错觉吗？",
+        "bg_music": "creepy_theme"
+      },
+      {
+        "id": "kidnap_moment",
+        "trigger_val": 100,
+        "text": "回家开门的一瞬间，一块带着乙醚味的手帕捂住了口鼻。\n昏迷前，你听到了 {npc_name} 的声音：“只有这样，你才只属于我一个人...”",
+        "next_scene": "basement"
+      },
+      {
+        "id": "basement_daily_01",
+        "text": "醒来时发现脚踝上扣着锁链。房间里贴满了你的画稿照片。\n{npc_name} 端着粥走进来：“乖，吃饭了。今天也不许出去哦。”",
+        "choices": [
+          { "text": "打翻碗（反抗）", "effect": "punish" },
+          { "text": "乖乖吃饭（顺从）", "effect": "affection_up" }
+        ]
+      }
+    ]
+  }
+}

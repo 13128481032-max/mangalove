@@ -1,0 +1,78 @@
+{
+  "names": {
+    "surnames": ["顾", "沈", "陆", "白", "谢", "裴", "霍", "江", "秦", "傅"],
+    "given_names": ["辞", "泽", "野", "妄", "予", "修", "让", "知行", "晏", "深", "沉", "聿"]
+  },
+
+  "appearance": {
+    "eyes": ["桃花眼", "瑞凤眼", "深邃狼眼", "含情脉脉", "眼尾泛红", "清冷如霜"],
+    "accessories": ["金丝眼镜", "黑色耳钉", "颈部纹身", "禁欲系领带", "医用口罩", "银色指环"],
+    "body": ["宽肩窄腰", "冷白皮", "指骨分明", "青筋微凸", "八块腹肌", "甚至有泪痣"],
+    "vibe": ["高岭之花", "斯文败类", "阳光健气", "阴郁病娇", "清冷禁欲", "桀骜不驯"]
+  },
+
+  "occupations": [
+    "集团总裁", "天才医生", "顶流爱豆", "赛车手", "大学教授", "神秘黑客", "当红CV"
+  ],
+
+  "personalities": [
+    {
+      "id": "sunny",
+      "name": "阳光修勾",
+      "description": "直球热烈，像小太阳一样围着你转，但极其害怕被抛弃。",
+      "jealousy_rate": 0.8,
+      "jealousy_behavior": "sad",
+      "dialogue_tone": "enthusiastic",
+      "exclusive_ending": "normal_happy"
+    },
+    {
+      "id": "gloomy",
+      "name": "阴湿偏执",
+      "description": "平时沉默寡言，甚至有些自卑，但占有欲极强，会在暗处盯着你。",
+      "jealousy_rate": 2.5,
+      "jealousy_behavior": "dangerous",
+      "dialogue_tone": "dark",
+      "exclusive_ending": "imprisonment",
+      "tags": ["yandere", "dangerous"]
+    },
+    {
+      "id": "arrogant",
+      "name": "傲娇毒舌",
+      "description": "嘴上说着不要，身体却很诚实。吃醋时会故意扣你的漫画资源。",
+      "jealousy_rate": 1.2,
+      "jealousy_behavior": "angry",
+      "dialogue_tone": "tsundere",
+      "exclusive_ending": "partnership"
+    },
+    {
+      "id": "gentle_black",
+      "name": "温柔腹黑",
+      "description": "永远带着笑意，但当你和其他男人亲近时，那个男人会莫名其妙倒霉。",
+      "jealousy_rate": 1.5,
+      "jealousy_behavior": "manipulative",
+      "dialogue_tone": "polite",
+      "exclusive_ending": "dominated"
+    }
+  ],
+
+  "interaction_feedback": {
+    "first_meet": {
+      "sunny": "姐姐！你是新来的漫画家吗？你的画风我好喜欢！",
+      "gloomy": "……如果不介意的话，可以离我近一点吗？",
+      "arrogant": "啧，这就你画的？稍微指点你一下也不是不行。",
+      "gentle_black": "很有灵气的线条呢，希望能有幸成为你笔下的主角。"
+    },
+    "date_success": {
+      "sunny": "今天超级开心！下次还要一起出来哦！",
+      "gloomy": "只要能和你待在一起，去哪里都无所谓……",
+      "arrogant": "勉强算是一次合格的约会吧，下次记得准时。",
+      "gentle_black": "和你度过的时光总是过得太快，让人有些贪心了呢。"
+    },
+    "cheating_caught": {
+      "sunny": "（眼眶红了）为什么要骗我？是我哪里做得不够好吗？",
+      "gloomy": "（死寂的眼神）我就知道……把你藏起来就好了，藏在只有我知道的地方。",
+      "arrogant": "你竟然敢背着我找别人？既然如此，别指望我会原谅你。",
+      "gentle_black": "（微笑着抚摸你的脸）这种不乖的孩子，是需要受到惩罚的哦。"
+    }
+  }
+}
