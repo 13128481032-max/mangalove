@@ -225,17 +225,44 @@
       {
         "id": "kidnap_moment",
         "trigger_val": 100,
-        "text": "回家开门的一瞬间，一块带着乙醚味的手帕捂住了口鼻。\n昏迷前，你听到了 {npc_name} 的声音：“只有这样，你才只属于我一个人...”",
+        "text": "回家开门的一瞬间，一块带着乙醚味的手帕捂住了口鼻。\n昏迷前，你听到了 {npc_name} 的声音：\"只有这样，你才只属于我一个人...\"",
         "next_scene": "basement"
       },
       {
         "id": "basement_daily_01",
-        "text": "醒来时发现脚踝上扣着锁链。房间里贴满了你的画稿照片。\n{npc_name} 端着粥走进来：“乖，吃饭了。今天也不许出去哦。”",
+        "text": "醒来时发现脚踝上扣着锁链。房间里贴满了你的画稿照片。\n{npc_name} 端着粥走进来：\"乖，吃饭了。今天也不许出去哦。\"",
         "choices": [
           { "text": "打翻碗（反抗）", "effect": "punish" },
           { "text": "乖乖吃饭（顺从）", "effect": "affection_up" }
         ]
       }
     ]
-  }
+  },
+  
+  "breakup_scenes": [
+    {
+      "id": "normal_breakup_start",
+      "type": "dialogue",
+      "title": "💔 分手时刻",
+      "text": "你深吸一口气，准备说出那个一直不敢面对的决定。\n{npc_name} 似乎察觉到了什么，表情变得严肃起来。\n\"有什么事想告诉我吗？\"他轻声问道。"
+    },
+    {
+      "id": "normal_breakup_end",
+      "type": "dialogue",
+      "title": "💔 结束",
+      "text": "空气中弥漫着令人窒息的沉默。\n{npc_name} 终于打破了寂静：\"我...明白了。\"\n他的声音有些沙哑，眼神中满是失落。\n\"如果这是你的选择，我尊重你。\"\n\n你们的关系，到此为止了。"
+    },
+    {
+      "id": "blackened_breakup_start",
+      "type": "dialogue",
+      "title": "⚠️ 危险信号",
+      "text": "当你说出分手的瞬间，{npc_name} 的表情突然凝固了。\n房间里的温度仿佛都降了几度。\n\"你...刚才说什么？\"他的声音低沉，带着一丝颤抖。"
+    },
+    {
+      "id": "blackened_breakup_end",
+      "type": "dialogue",
+      "title": "🔒 囚禁开始",
+      "text": "{npc_name} 突然笑了起来，但那笑声里没有一丝温度。\n\"分手？姐姐在说什么呢？\"\n他一步步逼近你，眼神变得疯狂。\n\"我不会让你离开我的。永远不会。\"\n\n你意识到自己犯了一个可怕的错误。"
+    }
+  ]
 }

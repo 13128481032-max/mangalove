@@ -244,7 +244,18 @@ export class UIManager {
             return;
         }
 
-        state.npcs.forEach(npc => {
+        // 只显示未分手且未被监禁的NPC
+        const activeNpcs = state.npcs.filter(npc => 
+            npc.status !== 'broken' && npc.status !== 'imprisoned'
+        );
+        
+        // 如果没有活跃的NPC，显示提示信息
+        if (activeNpcs.length === 0) {
+            container.innerHTML = `<div style="color:#999; font-size:14px; text-align:center; padding:10px;">暂无活跃的关系...<br>去外出结识新朋友吧！</div>`;
+            return;
+        }
+        
+        activeNpcs.forEach(npc => {
             const card = document.createElement('div');
             card.className = 'npc-card'; 
 

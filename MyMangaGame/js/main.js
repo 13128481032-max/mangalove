@@ -1078,7 +1078,7 @@ class Game {
     }
     
     /**
-     * �� 处理与NPC断联/分手的逻辑
+     * 💔 处理与NPC断联/分手的逻辑
      */
     actionBreakContact(npc) {
         this.ui.showDialog({
@@ -1087,13 +1087,24 @@ class Game {
             choices: [
                 {
                     text: "是的，我想清楚了",
-                    action: () => {
-                        // 更新NPC状态为前任
-                        npc.status = 'broken';
-                        // 大幅降低好感度
-                        npc.favorability = -20;
-                        this.ui.showToast(`已与 ${npc.name} 断联`, "error");
+                    action: async () => {
+                        // 1. 先关闭确认对话框
                         this.ui.closeDialog();
+                        
+                        // 2. 调用NPCSystem的attemptBreakContact方法处理分手逻辑
+                        // 该方法会返回是否触发黑化
+                        const breakupResult = await this.npcSystem.attemptBreakContact(npc);
+                        
+                        // 3. 展示对应的分手剧情
+                        if (breakupResult.isBlackened) {
+                            // 黑化剧情
+                            await this.eventSystem.showBreakupScene('blackened', npc);
+                        } else {
+                            // 正常分手剧情
+                            await this.eventSystem.showBreakupScene('normal', npc);
+                        }
+                        
+                        // 4. 剧情完成后更新UI，此时NPC已经被正确设置状态
                         this.ui.updateAll(gameState);
                     }
                 },

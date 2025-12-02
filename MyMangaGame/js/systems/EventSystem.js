@@ -276,4 +276,84 @@ export class EventSystem {
     pickRandom(arr) {
         return arr[Math.floor(Math.random() * arr.length)];
     }
+
+    /**
+     * 展示分手剧情
+     * @param {string} type - 'normal' 或 'blackened'
+     * @param {object} npc - NPC对象
+     * @returns {Promise} - 剧情完成的Promise
+     */
+    async showBreakupScene(type, npc) {
+        return new Promise(async (resolve) => {
+            // 加载分手剧情数据
+            try {
+                const response = await fetch('./js/data/events.json');
+                const data = await response.json();
+                const breakupScenes = data.breakup_scenes || [];
+                
+                // 获取对应的剧情
+                let startSceneId, endSceneId;
+                if (type === 'blackened') {
+                    startSceneId = 'blackened_breakup_start';
+                    endSceneId = 'blackened_breakup_end';
+                } else {
+                    startSceneId = 'normal_breakup_start';
+                    endSceneId = 'normal_breakup_end';
+                }
+                
+                // 找到对应ID的剧情
+                const startScene = breakupScenes.find(s => s.id === startSceneId);
+                const endScene = breakupScenes.find(s => s.id === endSceneId);
+                
+                if (!startScene || !endScene) {
+                    console.error('未找到分手剧情数据');
+                    resolve();
+                    return;
+                }
+                
+                // 替换占位符
+                const formatScene = (scene) => ({
+                    ...scene,
+                    text: scene.text.replace(/\{npc_name\}/g, npc.name)
+                });
+                
+                // 显示开始场景
+                await this.showSingleScene(formatScene(startScene));
+                
+                // 显示结束场景
+                await this.showSingleScene(formatScene(endScene));
+                
+                resolve();
+            } catch (error) {
+                console.error('加载分手剧情失败:', error);
+                resolve();
+            }
+        });
+    }
+    
+    /**
+     * 显示单个场景
+     */
+    async showSingleScene(scene) {
+        return new Promise((resolve) => {
+            const game = window.game;
+            if (game && game.ui) {
+                game.ui.showDialog({
+                    title: scene.title,
+                    text: scene.text,
+                    choices: [
+                        {
+                            text: scene.type === 'dialogue' ? '继续' : '确定',
+                            action: () => {
+                                game.ui.closeDialog();
+                                resolve();
+                            }
+                        }
+                    ]
+                });
+            } else {
+                resolve();
+            }
+        });
+    }
 }
