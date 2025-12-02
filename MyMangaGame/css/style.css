@@ -1,0 +1,424 @@
+/* =========================================
+   0. 字体引入 (Pixel Font)
+   * 必须联网才能加载，如果离线开发请下载字体文件
+   ========================================= */
+@import url('https://fonts.googleapis.com/css2?family=DotGothic16&family=VT323&display=swap');
+
+/* =========================================
+   1. 全局配置 (Variables)
+   草莓牛奶配色方案 + 像素质感
+   ========================================= */
+:root {
+    /* --- 核心配色 --- */
+    --bg-page: #FFF0F5;       /* 薰衣草粉红 (背景) */
+    --bg-card: #FFFFFF;       /* 纯白 */
+    --bg-panel: #FFF8FA;      /* 极浅的粉色面板 */
+    
+    --text-main: #4A3B3B;     /* 巧克力色 (代替纯黑，更柔和) */
+    --text-sub: #9C8C8C;      /* 浅可可色 */
+    
+    /* --- 功能色 --- */
+    --accent: #FF8EA2;        /* 糖果粉 (主操作) */
+    --accent-hover: #FF7089;  
+    --accent-text: #FFFFFF;
+    
+    --danger: #FF6B6B;        /* 像素红 */
+    --success: #51CF66;       /* 像素绿 */
+    --dark-overlay: rgba(74, 59, 59, 0.6); /* 遮罩颜色 */
+    
+    /* --- 像素风 UI 特征 --- */
+    --border-width: 2px;
+    --border-color: #4A3B3B;  /* 深色描边 */
+    --radius-main: 12px;      /* 虽然是像素风，保留一点圆角更可爱 */
+    
+    /* 硬边阴影 (关键！不要模糊) */
+    --shadow-hard: 4px 4px 0px rgba(74, 59, 59, 0.15); 
+    --shadow-btn: 3px 3px 0px #4A3B3B; 
+    --shadow-btn-pressed: 0px 0px 0px #4A3B3B;
+
+    /* --- 字体 --- */
+    --font-pixel: 'DotGothic16', 'VT323', monospace, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-pixel); /* 应用像素字体 */
+    /* 背景制作：粉色底 + 可爱的波点纹理 */
+    background-color: var(--bg-page);
+    background-image: radial-gradient(#FFD1DC 20%, transparent 20%);
+    background-size: 20px 20px;
+    
+    color: var(--text-main);
+    line-height: 1.5;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    font-size: 16px; /* 像素字体通常需要大一点才清晰 */
+}
+
+/* =========================================
+   2. 主界面布局 (Layout)
+   ========================================= */
+#game-container {
+    width: 95%;
+    max-width: 1100px;
+    height: 90vh;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+    
+    /* 给整个游戏容器加一个大边框，像掌机屏幕 */
+    background: var(--bg-card);
+    border: var(--border-width) solid var(--border-color);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 8px 8px 0px rgba(74, 59, 59, 0.2);
+}
+
+/* 通用面板样式 */
+.panel {
+    background: var(--bg-panel);
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--radius-main);
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    
+    /* 这种滚动条样式仅在 Chrome/Safari 生效，为了美观 */
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) var(--bg-panel);
+}
+
+/* 侧边栏 */
+.sidebar {
+    background: #FFF; /* 侧边栏更亮一点 */
+}
+
+/* =========================================
+   3. UI 组件 (Components)
+   ========================================= */
+
+/* 标题 */
+h2 {
+    font-size: 24px;
+    border-bottom: 2px dashed var(--accent); /* 虚线装饰 */
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+    color: var(--accent-hover);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+h3 {
+    font-size: 18px;
+    color: var(--text-sub);
+}
+
+/* 按钮 - 核心像素感来源 */
+.btn {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 16px;
+    font-family: var(--font-pixel);
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.1s;
+    
+    /* 像素按钮样式 */
+    background-color: #FFF;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: var(--shadow-btn);
+    color: var(--text-main);
+    margin-bottom: 4px; /* 留出阴影位置 */
+}
+
+.btn:hover {
+    background-color: #FFF0F5;
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0px var(--border-color);
+}
+
+.btn:active {
+    transform: translate(3px, 3px); /* 按下效果 */
+    box-shadow: var(--shadow-btn-pressed);
+}
+
+/* 主要按钮 (粉色) */
+.btn-primary {
+    background-color: var(--accent);
+    color: var(--accent-text);
+}
+.btn-primary:hover {
+    background-color: var(--accent-hover);
+}
+
+/* 危险按钮 */
+.btn-danger {
+    background-color: #FFF;
+    color: var(--danger);
+    border-color: var(--danger);
+    box-shadow: 3px 3px 0px var(--danger);
+}
+.btn-danger:active {
+    box-shadow: 0px 0px 0px var(--danger);
+}
+
+/* 属性条 / 进度条 */
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    background: #FFF;
+    border: 2px solid #EAEAEA;
+    padding: 8px;
+    border-radius: 8px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 14px; /* 厚一点 */
+    background-color: #FFF;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    margin-top: 6px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: var(--accent);
+    width: 50%;
+    border-right: 2px solid var(--border-color); /* 进度条右侧封口 */
+    
+    /* 增加斜纹装饰，更有复古感 */
+    background-image: linear-gradient(
+        45deg, 
+        rgba(255,255,255,.15) 25%, 
+        transparent 25%, 
+        transparent 50%, 
+        rgba(255,255,255,.15) 50%, 
+        rgba(255,255,255,.15) 75%, 
+        transparent 75%, 
+        transparent
+    );
+    background-size: 10px 10px;
+}
+
+/* =========================================
+   4. 游戏模块 (Game Modules)
+   ========================================= */
+
+/* NPC 卡片 */
+.npc-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+}
+
+.npc-card {
+    background: #FFF;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px;
+    position: relative;
+    box-shadow: var(--shadow-hard);
+    transition: transform 0.2s;
+}
+
+.npc-card:hover {
+    transform: translateY(-4px);
+}
+
+.npc-header {
+    font-size: 18px;
+    border-bottom: 2px solid #EEE;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* 标签样式 */
+.npc-tags span {
+    display: inline-block;
+    font-size: 12px;
+    padding: 2px 6px;
+    background: #FFF0F5;
+    border: 1px solid var(--accent);
+    color: var(--accent-hover);
+    border-radius: 4px;
+    margin-right: 4px;
+    margin-bottom: 4px;
+}
+
+/* 漫画创作区 */
+.manga-workspace {
+    border: 3px dashed #DCC;
+    background: #FFF;
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+    color: var(--text-sub);
+    position: relative;
+}
+.manga-workspace::after {
+    content: "✎"; /* 装饰图标 */
+    position: absolute;
+    top: -15px;
+    right: -10px;
+    font-size: 30px;
+    color: var(--accent);
+    transform: rotate(15deg);
+}
+
+/* =========================================
+   5. 剧情对话框 (Visual Novel Style)
+   ========================================= */
+#dialogue-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4); /* 半透明黑底 */
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    justify-content: flex-end; /* 对话框沉底 */
+    padding: 20px;
+    padding-bottom: 40px;
+}
+
+.dialogue-box {
+    background: #FFF;
+    border: 3px solid var(--border-color);
+    box-shadow: 8px 8px 0px rgba(0,0,0,0.3);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 24px;
+    position: relative;
+    animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popUp {
+    from { transform: scale(0.8) translateY(20px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* 说话人名字 */
+#speaker-name {
+    position: absolute;
+    top: -20px;
+    left: 20px;
+    background: var(--accent);
+    color: #FFF;
+    padding: 4px 16px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 18px;
+    box-shadow: 3px 3px 0px rgba(0,0,0,0.2);
+}
+
+.dialogue-text {
+    font-size: 20px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    min-height: 60px;
+}
+
+/* 选项容器 */
+.choice-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* =========================================
+   6. 阴湿结局/暗黑模式 (Dark Mode)
+   ========================================= */
+#dialogue-overlay.dark-mode {
+    background: rgba(20, 0, 0, 0.8); /* 深红黑遮罩 */
+}
+
+#dialogue-overlay.dark-mode .dialogue-box {
+    background: #2A1A1A;
+    border-color: #FF0000;
+    color: #EEE;
+    box-shadow: 8px 8px 0px #500;
+}
+
+#dialogue-overlay.dark-mode #speaker-name {
+    background: #FF0000;
+    color: #000;
+    border-color: #FFF;
+}
+
+/* =========================================
+   7. 移动端适配 (Mobile)
+   ========================================= */
+@media (max-width: 768px) {
+    body {
+        background-image: none; /* 手机去掉波点背景提升性能 */
+        padding: 0;
+    }
+
+    #game-container {
+        width: 100%;
+        height: 100dvh;
+        border: none;
+        border-radius: 0;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        padding: 10px;
+        gap: 12px;
+        box-shadow: none;
+    }
+
+    /* 手机端顶部栏 */
+    .sidebar {
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: 10px;
+        border-bottom: 2px solid var(--border-color);
+        box-shadow: 0 4px 0 rgba(0,0,0,0.05);
+        border-radius: 12px;
+    }
+
+    .sidebar h2, .sidebar hr, .sidebar h3 { display: none; }
+
+    .stat-row {
+        font-size: 14px;
+        padding: 4px 8px;
+        border: 1px solid #DDD;
+    }
+
+    /* 手机端对话框 */
+    #dialogue-overlay {
+        padding: 10px;
+        padding-bottom: 20px;
+    }
+    
+    .dialogue-box {
+        padding: 16px;
+    }
+    
+    .dialogue-text {
+        font-size: 18px;
+    }
+}

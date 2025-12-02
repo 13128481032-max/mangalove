@@ -1,0 +1,327 @@
+/* =========================================
+   1. 动态提示框 (Toast Notification)
+   对应 UIManager.js 中的 showToast 功能
+   ========================================= */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+}
+
+/* 提示框本体：像素气泡风格 */
+.toast-message {
+    font-family: var(--font-pixel);
+    font-size: 16px;
+    padding: 12px 24px;
+    background: #FFF;
+    color: var(--text-main);
+    
+    /* 像素风核心：黑边框 + 硬阴影 */
+    border: 2px solid var(--border-color);
+    box-shadow: 4px 4px 0px rgba(0,0,0,0.2);
+    border-radius: 8px; /* 轻微圆角 */
+    
+    /* 进场动画 */
+    animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 不同类型的提示颜色 */
+.toast-success {
+    border-color: #2B8A3E;
+    color: #2B8A3E;
+    background: #E6FCF5; /* 浅绿背景 */
+    box-shadow: 4px 4px 0px #2B8A3E;
+}
+
+.toast-error {
+    border-color: #C92A2A;
+    color: #C92A2A;
+    background: #FFF5F5; /* 浅红背景 */
+    box-shadow: 4px 4px 0px #C92A2A;
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* =========================================
+   2. 男主卡片 (NPC Card)
+   对应 UIManager.js 中的 updateNPCs
+   ========================================= */
+.npc-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+    padding: 4px; /* 防止阴影被切掉 */
+}
+
+.npc-card {
+    background: #FFFFFF;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    position: relative;
+    
+    /* 悬浮效果 */
+    transition: all 0.2s;
+    box-shadow: 4px 4px 0px rgba(74, 59, 59, 0.1);
+}
+
+.npc-card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px var(--accent); /* 悬浮时阴影变粉 */
+    border-color: var(--accent);
+}
+
+/* 卡片头部 */
+.npc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px dashed #EEE;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+/* 状态标签 (交往中/危险) */
+.status-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border: 1px solid currentColor;
+    border-radius: 4px;
+    background: #FFF;
+}
+
+/* 标签容器 */
+.npc-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+/* 个性标签样式 */
+.tag-personality {
+    font-size: 12px;
+    padding: 4px 8px;
+    background: var(--bg-page); /* 浅粉背景 */
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: 1px 1px 0px rgba(0,0,0,0.1);
+}
+
+/* =========================================
+   3. 进度条组件 (Progress Bar)
+   用于精力条、好感度等
+   ========================================= */
+.progress-container {
+    width: 100%;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 16px;
+    background: #FFF;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: var(--accent);
+    width: 0%;
+    transition: width 0.3s ease;
+    border-right: 2px solid var(--border-color);
+    
+    /* 复古斜纹理 */
+    background-image: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(255,255,255, 0.3) 10px,
+        rgba(255,255,255, 0.3) 20px
+    );
+}
+
+/* 危险状态 (精力低) */
+.progress-fill.danger {
+    background-color: var(--danger);
+}
+
+/* =========================================
+   4. 对话框与剧情覆盖层 (Visual Novel Overlay)
+   对应 UIManager.js 中的 showDialogue
+   ========================================= */
+#dialogue-overlay {
+    position: fixed; /* 改为 fixed，确保覆盖全屏 */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    /* 背景纹理 */
+    background: rgba(255, 240, 245, 0.9);
+    background-image: radial-gradient(var(--line-color) 1px, transparent 1px);
+    background-size: 4px 4px;
+    z-index: 9999; /* 提高层级 */
+
+    /* 【核心修复】启用滚动布局 */
+    display: none; /* 默认隐藏，JS会改为 flex */
+    overflow-y: auto; /* 允许垂直滚动 */
+    
+    /* 使用 flex 布局，但用 align-items: flex-start 配合 margin: auto */
+    /* 这样短内容会居中，长内容可以滚动，不会被切掉顶部 */
+    align-items: flex-start; 
+    justify-content: center;
+    padding: 20px; 
+}
+
+.dialogue-box {
+    background: #FFF;
+    border: 3px solid var(--border-color);
+    border-radius: 16px;
+    padding: 24px;
+    width: 100%;
+    max-width: 800px;
+    margin: auto; 
+    margin-bottom: 50px;
+
+}
+
+/* 名字标签 - 像便利贴一样贴在对话框左上角 */
+#speaker-name {
+    position: absolute;
+    top: -24px;
+    left: 24px;
+    background: var(--accent);
+    color: #FFF;
+    font-family: var(--font-pixel);
+    font-size: 20px;
+    padding: 6px 16px;
+    border: 3px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 4px 4px 0px rgba(0,0,0,0.2);
+    transform: rotate(-2deg); /* 微微倾斜，更俏皮 */
+    z-index: 10;
+}
+
+.dialogue-text {
+    max-height: 60vh; /* 限制文本高度 */
+    overflow-y: auto; /* 文本内部也可以滚动 */
+    margin-bottom: 20px;
+    padding-right: 10px; /* 给滚动条留位置 */
+}
+
+/* 自定义滚动条样式 (Webkit) */
+.dialogue-text::-webkit-scrollbar {
+    width: 6px;
+}
+.dialogue-text::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+.dialogue-text::-webkit-scrollbar-thumb {
+    background: var(--line-color);
+    border-radius: 3px;
+}
+
+/* 装饰性小尾巴 */
+.dialogue-box::after {
+    content: "▼";
+    position: absolute;
+    bottom: 5px;
+    right: 10px;
+    font-size: 12px;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* 选项按钮容器 */
+.choice-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* 覆盖 style.css 的按钮样式，专门用于选项 */
+.choice-container .btn {
+    width: 100%;
+    text-align: left;
+    justify-content: flex-start;
+    padding: 16px;
+    background: #FFF;
+    border: 2px solid var(--border-color);
+    transition: 0.2s;
+}
+
+.choice-container .btn:hover {
+    background: var(--accent);
+    color: #FFF;
+    transform: translateX(8px); /* 悬浮时右移 */
+}
+
+/* =========================================
+   5. 暗黑/囚禁模式 (Dark Mode)
+   当进入特殊结局时
+   ========================================= */
+#dialogue-overlay.dark-mode {
+    background: rgba(0, 0, 0, 0.9);
+}
+
+#dialogue-overlay.dark-mode .dialogue-box {
+    background: #2C2C2C;
+    border-color: #FF3B30; /* 鲜红边框 */
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.2);
+}
+
+#dialogue-overlay.dark-mode #speaker-name {
+    background: #FF3B30;
+    border-color: #FFF;
+    color: #000;
+    transform: rotate(2deg); /* 反向倾斜 */
+}
+
+#dialogue-overlay.dark-mode .dialogue-text {
+    color: #EEE;
+    text-shadow: 0 0 5px rgba(255,0,0,0.5); /* 文字发光 */
+}
+/* 新增：男主头像样式 */
+.avatar-container {
+    width: 60px;
+    height: 60px;
+    background-color: #f0f0f0;
+    border: 2px solid #4A2C35; /* 配合你的主色调 */
+    border-radius: 4px;
+    overflow: hidden;
+    flex-shrink: 0; /* 防止被挤压 */
+    box-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+}
+
+.avatar-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* 保持像素清晰度 */
+    image-rendering: pixelated; 
+}
+
+/* 调整卡片布局，防止内容太挤 */
+.npc-card {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+}
