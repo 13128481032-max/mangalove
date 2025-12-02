@@ -1,0 +1,279 @@
+import { gameState } from '../state.js';
+
+export class EventSystem {
+    constructor() {
+        this.events = []; // 存储所有加载的事件
+    }
+
+    /**
+     * 1. 初始化方法
+     * main.js 会调用 await eventSystem.init()
+     */
+    async init() {
+        try {
+            const response = await fetch('./js/data/events.json');
+            if (!response.ok) throw new Error("HTTP error " + response.status);
+            
+            const data = await response.json();
+            
+            // 合并所有事件类型
+            this.events = [
+                ...(data.tutorial || []),
+                ...(data.daily_work || []),
+                ...(data.encounters || []),
+                ...(data.manga_stories || []),
+                ...(data.conflict?.jealousy_light || []),
+                ...(data.conflict?.shuraba || []),
+                ...(data.special_endings?.gloomy_chain || [])
+            ];
+            console.log(`[EventSystem] 成功加载 ${this.events.length} 个事件`);
+        } catch (error) {
+            console.error("❌ 无法加载 events.json:", error);
+            this.events = [];
+        }
+    }
+
+    /**
+     * 2. 核心：检查触发
+     * 【修改】增加传入 npcSystem，以便获取台词
+     */
+    checkTriggers(gameState, triggerType, ui, npcSystem) {
+        // 1. 修罗场检查 (高优先级)
+        if (triggerType === 'work' || triggerType === 'go_out') {
+            // 传入 npcSystem
+            const conflictEvent = this.checkJealousyConflict(gameState, npcSystem);
+            if (conflictEvent) {
+                this.startEvent(conflictEvent, ui, gameState);
+                return true;
+            }
+        }
+
+        // 2. 筛选符合当前时机的所有事件
+        const candidates = this.events.filter(evt => 
+            evt.trigger === triggerType && 
+            !gameState.flags[evt.id] && 
+            this.checkConditions(evt.conditions, gameState)
+        );
+
+        if (candidates.length === 0) return false;
+
+        const selectedEvent = this.pickRandom(candidates);
+        this.startEvent(selectedEvent, ui, gameState);
+        return true;
+    }
+
+    /**
+     * 3. 条件检测器
+     */
+    checkConditions(conditions, gameState) {
+        if (!conditions) return true; 
+
+        const p = gameState.player;
+        
+        // 检查属性
+        if (conditions.min_art && p.attributes.art < conditions.min_art) return false;
+        if (conditions.min_charm && p.attributes.charm < conditions.min_charm) return false;
+        
+        // 检查金钱/粉丝
+        if (conditions.min_fans && p.fans < conditions.min_fans) return false;
+        
+        // 检查特定男主状态
+        if (conditions.dating_with) {
+            const boyfriend = gameState.npcs && gameState.npcs.find(n => n.id === conditions.dating_with);
+            if (!boyfriend || boyfriend.status !== 'dating') return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 4. 修罗场逻辑 (动态生成)
+     */
+    checkJealousyConflict(gameState, npcSystem) {
+        if (!gameState.npcs) return null;
+
+        // 1. 筛选出关系亲密的人 (好感度 > 60 或者 已经是恋人)
+        // 只有关系够好，才会吃醋
+        const lovers = gameState.npcs.filter(n => n.status === 'dating' || n.favorability >= 60);
+        
+        // 至少要有 2 个人才能修罗场
+        if (lovers.length < 2) return null; 
+
+        // 2. 概率判定 (约会/外出的人越多，越容易撞车)
+        // 2个人: 10%, 3个人: 20%, 4个人: 30%...
+        const riskChance = (lovers.length - 1) * 0.1; 
+        if (Math.random() > riskChance) return null; // 没触发，平安无事
+
+        console.log("🔥 触发修罗场！当前高好感人数:", lovers.length);
+
+        // 3. 随机抽取两名受害者 (A 和 B)
+        // 先打乱数组
+        const shuffled = lovers.sort(() => 0.5 - Math.random());
+        const npcA = shuffled[0];
+        const npcB = shuffled[1];
+
+        // 4. 获取他们的台词 (需要 npcSystem 支持)
+        const lineA = npcSystem ? npcSystem.getJealousyLine(npcA) : "...";
+        const lineB = npcSystem ? npcSystem.getJealousyLine(npcB) : "...";
+
+        // 5. 动态构建事件对象
+        return {
+            id: `shuraba_${Date.now()}`,
+            title: "⚠️ 修罗场爆发",
+            // 动态文本
+            text: `当你正准备离开时，却迎面撞上了 ${npcA.name}。\n还没来得及打招呼，你的身后传来了 ${npcB.name} 的脚步声。\n\n空气瞬间凝固了。\n\n【${npcA.name}】:\n“${lineA}”\n\n【${npcB.name}】:\n“${lineB}”`,
+            choices: [
+                {
+                    text: `偏向 ${npcA.name} (好感↑, ${npcB.name}心碎)`,
+                    effects: { dating_with: npcA.id }, // 特殊标记
+                    action: () => {
+                        npcA.favorability += 10;
+                        npcB.favorability -= 20; // 没被选中的人好感大跌
+                    }
+                },
+                {
+                    text: `偏向 ${npcB.name} (好感↑, ${npcA.name}心碎)`,
+                    effects: { dating_with: npcB.id },
+                    action: () => {
+                        npcB.favorability += 10;
+                        npcA.favorability -= 20;
+                    }
+                },
+                {
+                    text: "你们不要吵了！(全部逃跑)",
+                    action: () => {
+                        npcA.favorability -= 10;
+                        npcB.favorability -= 10;
+                    }
+                }
+            ]
+        };
+    }
+
+    /**
+     * 【新增功能】文本格式化工具
+     * 负责把 {npc_name} 替换成真的名字
+     */
+    formatText(text, gameState) {
+        if (!text) return "";
+        let content = text;
+
+        // 1. 替换玩家名字
+        content = content.replace(/{player_name}/g, gameState.player.name || "你");
+
+        // 2. 替换 NPC 名字
+        if (content.includes('{npc_name}')) {
+            let targetName = "神秘男子";
+            
+            // 尝试找一个认识的 NPC
+            if (gameState.npcs && gameState.npcs.length > 0) {
+                const randomNPC = this.pickRandom(gameState.npcs);
+                if (randomNPC) targetName = randomNPC.name;
+            }
+            
+            content = content.replace(/{npc_name}/g, targetName);
+        }
+
+        // 3. 替换 交互对象的名字 A 和 B (用于修罗场)
+        // 这里只是简单示例，后续可扩展更复杂的逻辑
+        if (content.includes('{npc_name_A}')) {
+             const npc = gameState.npcs && gameState.npcs[0];
+             content = content.replace(/{npc_name_A}/g, npc ? npc.name : "男人A");
+        }
+        if (content.includes('{npc_name_B}')) {
+             const npc = gameState.npcs && gameState.npcs[1];
+             content = content.replace(/{npc_name_B}/g, npc ? npc.name : "男人B");
+        }
+
+        return content;
+    }
+
+    /**
+     * 5. 启动事件
+     */
+    startEvent(eventData, ui, gameState) {
+        const title = eventData.title || "触发剧情";
+        console.log(`[EventSystem] 启动事件: ${title}`);
+        
+        if (eventData.once) {
+            gameState.flags[eventData.id] = true;
+        }
+
+        // 兼容 options 和 choices
+        const choicesData = eventData.choices || eventData.options || [];
+
+        // 【关键】调用格式化工具处理文本
+        const processedText = this.formatText(eventData.text, gameState);
+
+        ui.showDialog({
+            title: title,
+            text: processedText,
+            choices: choicesData.map((opt) => ({
+                text: opt.text,
+                action: () => this.resolveChoice(opt, ui, gameState)
+            }))
+        });
+    }
+
+    /**
+     * 6. 结算玩家的选择
+     */
+    resolveChoice(option, ui, gameState) {
+        console.log("玩家选择了:", option.text);
+        // 应用数值影响 (兼容 effect 和 effects)
+        if (option.effects) {
+            this.applyEffects(option.effects, gameState, ui);
+        } else if (option.effect) {
+            this.applyEffects(option.effect, gameState, ui);
+        }
+
+        // 关闭当前弹窗
+        ui.closeDialog();
+
+        // 连环事件处理
+        if (option.next_event) {
+            const nextEvent = this.events.find(e => e.id === option.next_event);
+            if (nextEvent) {
+                setTimeout(() => {
+                    this.startEvent(nextEvent, ui, gameState);
+                }, 300);
+            }
+        }
+    }
+
+    /**
+     * 7. 应用效果
+     */
+    applyEffects(effects, gameState, ui) {
+        const p = gameState.player;
+        
+        if (effects.money) p.money += effects.money;
+        if (effects.fans) p.fans += effects.fans;
+        if (effects.energy) p.energy += effects.energy;
+        if (effects.art) p.attributes.art += effects.art;
+        if (effects.dating_with_npc_favor) {
+            // 简单策略：给列表里的第一个人，或者随机一个人加分
+            // 这里的逻辑对应 formatText 里随机选人的逻辑
+            if (gameState.npcs && gameState.npcs.length > 0) {
+                // 这里简单给第一个人加，或者你可以写更复杂的逻辑去记录是哪个npc触发的事件
+                const luckyGuy = gameState.npcs[0]; 
+                luckyGuy.favorability += effects.dating_with_npc_favor;
+                ui.showToast(`${luckyGuy.name} 好感度 +${effects.dating_with_npc_favor}`);
+            }
+        }
+        // 特殊状态：被囚禁
+        if (effects.status === 'confined') {
+            gameState.flags['is_confined'] = true;
+            document.body.classList.add('mode-confined');
+            ui.showToast("你失去了自由...");
+        }
+
+        // 更新 UI
+        ui.updateAll(gameState);
+    }
+
+    // 工具函数
+    pickRandom(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+    }
+}

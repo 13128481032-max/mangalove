@@ -1,0 +1,147 @@
+[
+  {
+    "id": "school_romance",
+    "name": "校园纯爱",
+    "description": "青涩的校园恋歌，最容易上手的题材。",
+    "tier": 1,
+    "base_income": 100,
+    "base_fans": 10,
+    "weights": {
+      "art": 0.4,
+      "story": 0.6,
+      "charm": 0.2
+    },
+    "cost_energy": 15,
+    "unlock_cond": {
+      "type": "default",
+      "value": 0
+    }
+  },
+  {
+    "id": "slice_of_life",
+    "name": "萌宠日常",
+    "description": "画猫猫狗狗的温馨日常，虽然受众固定但粉丝粘性高。",
+    "tier": 1,
+    "base_income": 80,
+    "base_fans": 15,
+    "weights": {
+      "art": 0.7,
+      "story": 0.3,
+      "charm": 0.5
+    },
+    "cost_energy": 15,
+    "unlock_cond": {
+      "type": "default",
+      "value": 0
+    }
+  },
+  {
+    "id": "ceo_romance",
+    "name": "霸道总裁",
+    "description": "“女人，你在玩火。” 市场广阔，收入可观，但容易被骂俗套。",
+    "tier": 2,
+    "base_income": 250,
+    "base_fans": 30,
+    "weights": {
+      "art": 0.5,
+      "story": 0.5,
+      "charm": 0.8
+    },
+    "cost_energy": 25,
+    "unlock_cond": {
+      "type": "fans_count",
+      "value": 500
+    }
+  },
+  {
+    "id": "horror_suspense",
+    "name": "悬疑恐怖",
+    "description": "深夜画稿时背后的凉意……需要极高的剧情构思能力。",
+    "tier": 2,
+    "base_income": 180,
+    "base_fans": 5,
+    "weights": {
+      "art": 0.2,
+      "story": 0.9,
+      "charm": 0.0
+    },
+    "cost_energy": 30,
+    "unlock_cond": {
+      "type": "attribute_check",
+      "attr": "story",
+      "value": 50
+    }
+  },
+  {
+    "id": "historical_drama",
+    "name": "古风权谋",
+    "description": "恢弘的宫廷与复杂的服饰，对画功和精力的双重考验。",
+    "tier": 3,
+    "base_income": 400,
+    "base_fans": 80,
+    "weights": {
+      "art": 0.9,
+      "story": 0.6,
+      "charm": 0.3
+    },
+    "cost_energy": 45,
+    "unlock_cond": {
+      "type": "item_owned",
+      "item_id": "history_book"
+    }
+  },
+  {
+    "id": "boys_love",
+    "name": "耽美纯爱",
+    "description": "美少年之间的禁忌之恋，拥有极其疯狂的氪金粉丝群体。",
+    "tier": 3,
+    "base_income": 350,
+    "base_fans": 100,
+    "weights": {
+      "art": 0.8,
+      "story": 0.4,
+      "charm": 0.8
+    },
+    "cost_energy": 35,
+    "unlock_cond": {
+      "type": "event_trigger",
+      "event_id": "met_mysterious_editor"
+    }
+  },
+  {
+    "id": "dark_cult",
+    "name": "深渊凝视",
+    "description": "极其压抑、甚至带有精神污染的画作。只有经历过黑暗的人才能画出。",
+    "tier": 4,
+    "base_income": 50,
+    "base_fans": 200,
+    "weights": {
+      "art": 1.0,
+      "story": 1.0,
+      "charm": 0.0
+    },
+    "cost_energy": 60,
+    "unlock_cond": {
+      "type": "status_check",
+      "status": "depressed"
+    }
+  },
+  {
+    "id": "yandere_diary",
+    "name": "囚鸟日记",
+    "description": "【特殊】记录被囚禁日子的画作，每一笔都是绝望的求救。",
+    "tier": 99,
+    "base_income": 0,
+    "base_fans": 500,
+    "weights": {
+      "art": 0.5,
+      "story": 1.5,
+      "charm": 0.0
+    },
+    "cost_energy": 10,
+    "unlock_cond": {
+      "type": "status_check",
+      "status": "confined"
+    }
+  }
+]
