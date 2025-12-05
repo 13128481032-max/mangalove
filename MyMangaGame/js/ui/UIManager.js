@@ -557,6 +557,144 @@ export class UIManager {
         // 3. 完成显示 - 样式已在方法开始设置
         console.log('🎉 对话框创建并显示完成');
     }
+    
+    /**
+     * 显示输入对话框（替代不被支持的prompt()函数）
+     */
+    showInputDialog(options) {
+        const overlay = this.els.dialogOverlay;
+        if (!overlay) {
+            console.error("❌ 找不到 id='dialogue-overlay'，无法显示输入对话框！");
+            return;
+        }
+        
+        // 设置overlay样式
+        overlay.style.display = 'flex';
+        overlay.style.justifyContent = 'center';
+        overlay.style.alignItems = 'center';
+        overlay.style.zIndex = '9999';
+        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100vw';
+        overlay.style.height = '100vh';
+        
+        // 清空旧内容
+        overlay.innerHTML = '';
+        
+        // 创建对话框容器
+        const box = document.createElement('div');
+        box.className = 'dialogue-box'; 
+        box.style.padding = '20px';
+        box.style.borderRadius = '8px';
+        box.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+        box.style.maxWidth = '500px';
+        box.style.width = '90%';
+        box.style.position = 'relative';
+        box.style.zIndex = '10000';
+        
+        // 暗黑模式支持
+        if (options.darkMode) {
+            box.style.backgroundColor = '#222222';
+            box.style.border = '3px solid #ff6b6b';
+            box.style.color = '#ffffff';
+        } else {
+            box.style.backgroundColor = '#ffffff';
+            box.style.border = '3px solid #4A2C35';
+            box.style.color = '#333333';
+        }
+        
+        // 标题
+        if (options.title) {
+            const h2 = document.createElement('h2');
+            h2.textContent = options.title;
+            h2.style.marginTop = '0';
+            h2.style.color = options.darkMode ? '#ff6b6b' : '#333';
+            box.appendChild(h2);
+        }
+        
+        // 文本内容
+        const p = document.createElement('div');
+        p.className = 'dialogue-text';
+        p.innerText = options.text || "请输入:";
+        p.style.margin = '15px 0';
+        p.style.lineHeight = '1.6';
+        box.appendChild(p);
+        
+        // 输入框
+        const inputContainer = document.createElement('div');
+        inputContainer.style.margin = '15px 0';
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = options.placeholder || '';
+        input.value = options.defaultValue || '';
+        input.style.width = '100%';
+        input.style.padding = '10px';
+        input.style.border = '2px solid ' + (options.darkMode ? '#555' : '#ddd');
+        input.style.borderRadius = '4px';
+        input.style.fontSize = '16px';
+        input.style.boxSizing = 'border-box';
+        input.style.backgroundColor = options.darkMode ? '#333' : '#fff';
+        input.style.color = options.darkMode ? '#fff' : '#333';
+        
+        // 自动聚焦输入框
+        setTimeout(() => input.focus(), 100);
+        
+        inputContainer.appendChild(input);
+        box.appendChild(inputContainer);
+        
+        // 按钮容器
+        const buttonContainer = document.createElement('div');
+        buttonContainer.style.display = 'flex';
+        buttonContainer.style.justifyContent = 'flex-end';
+        buttonContainer.style.gap = '10px';
+        buttonContainer.style.marginTop = '20px';
+        
+        // 取消按钮
+        if (options.allowCancel !== false) {
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'btn';
+            cancelBtn.textContent = "取消";
+            cancelBtn.style.padding = '10px 15px';
+            cancelBtn.style.border = 'none';
+            cancelBtn.style.borderRadius = '4px';
+            cancelBtn.style.backgroundColor = '#666';
+            cancelBtn.style.color = 'white';
+            cancelBtn.style.cursor = 'pointer';
+            cancelBtn.style.fontSize = '14px';
+            
+            cancelBtn.onclick = () => {
+                this.closeDialog();
+                if (options.onCancel) options.onCancel();
+            };
+            
+            buttonContainer.appendChild(cancelBtn);
+        }
+        
+        // 确认按钮
+        const confirmBtn = document.createElement('button');
+        confirmBtn.className = 'btn';
+        confirmBtn.textContent = "确认";
+        confirmBtn.style.padding = '10px 15px';
+        confirmBtn.style.border = 'none';
+        confirmBtn.style.borderRadius = '4px';
+        confirmBtn.style.backgroundColor = '#4A2C35';
+        confirmBtn.style.color = 'white';
+        confirmBtn.style.cursor = 'pointer';
+        confirmBtn.style.fontSize = '14px';
+        
+        confirmBtn.onclick = () => {
+            const value = input.value;
+            this.closeDialog();
+            if (options.onConfirm) options.onConfirm(value);
+        };
+        
+        buttonContainer.appendChild(confirmBtn);
+        box.appendChild(buttonContainer);
+        overlay.appendChild(box);
+    }
 
     /**
      * 【新增】显示每日结算报告

@@ -132,15 +132,16 @@ class Game {
         // 2. 连载中流程 - 新版
         this.ui.showDialog({
             title: `连载中: 《${work.title}》`,
-            text: `第 ${work.chapter} 话 | 人气: ${gameState.player.fans}\n状态: 灵感充沛`,
+            text: `题材: ${work.genreName} | 画风: ${work.styleName || '标准'}\n当前: 第 ${work.chapter} 话 | 总分: ${work.totalScore.toFixed(0)}\n排名: No.${career.currentRank}`,
             choices: [
                 {
                     text: "✍️ 开始构思新一话", // 进入新流程
                     action: () => this.step1_SelectFocus(work)
                 },
                 {
-                    text: "📈 查看读者反馈", // 可以在这里加个简单的评论系统
-                    action: () => this.ui.showToast("还没做这个功能...")
+                    // 【修改这里】调用新的反馈面板
+                    text: "📱 查看读者反馈",
+                    action: () => this.openFeedbackPanel()
                 },
                 {
                     text: "🏁 完结撒花",
@@ -149,6 +150,98 @@ class Game {
                 { text: "返回", action: () => this.ui.closeDialog() }
             ]
         });
+    }
+
+    // ==========================================
+    // 读者反馈系统 (替换原本的 handleWork 中的空缺)
+    // ==========================================
+
+    /** 
+     * 打开读者反馈面板
+     * 能够看到评论，并选择回复热评
+     */ 
+    openFeedbackPanel() { 
+        const work = gameState.mangaCareer.currentWork;
+        
+        // 如果还没开始画，或者刚立项还没发布第一话
+        if (!work || work.chapter === 0) {
+            this.ui.showToast("还没有发布过章节，暂无反馈。", "error");
+            return;
+        }
+
+        // 生成数据
+        const feedbackData = this.mangaSystem.getReaderFeedback(work);
+        
+        // 构建显示文本
+        let feedbackText = `📊 《${work.title}》近期评论区摘要：\n\n`;
+        
+        feedbackData.list.forEach(comment => {
+            feedbackText += `💬 "${comment}"\n`;
+        });
+        
+        feedbackText += `\n🔥 [热门评论] @${feedbackData.hotComment.user} (👍${feedbackData.hotComment.likes}):\n"${feedbackData.hotComment.content}"`;
+
+        // 互动选项
+        const choices = [
+            {
+                text: "🥰 感谢支持 (精力-5, 粉丝+)",
+                action: () => this.actionReplyComment('thanks', feedbackData.hotComment)
+            },
+            {
+                text: "😠 怒怼黑粉 (精力-10, 随机效果)",
+                action: () => this.actionReplyComment('argue', feedbackData.hotComment)
+            },
+            {
+                text: "🤐 高冷无视 (无消耗)",
+                action: () => this.ui.closeDialog()
+            }
+        ];
+
+        this.ui.showDialog({
+            title: "📱 读者反馈",
+            text: feedbackText,
+            choices: choices
+        });
+    }
+
+    /** 
+     * 处理回复评论的逻辑
+     */ 
+    actionReplyComment(type, commentData) {
+        if (gameState.player.energy < 5) {
+            this.ui.showToast("精力不足，没力气打字了...", "error");
+            return;
+        }
+
+        let resultMsg = "";
+        
+        if (type === 'thanks') {
+            this.timeSystem.consumeEnergy(5);
+            const fanGain = Math.floor(Math.random() * 20) + 10;
+            gameState.player.fans += fanGain;
+            resultMsg = `你的亲切回复让粉丝们很感动！\n粉丝 +${fanGain}`;
+        }
+        else if (type === 'argue') {
+            this.timeSystem.consumeEnergy(10);
+            // 只有在差评时怼回去才可能爽，否则会掉粉
+            if (commentData.type === 'low_score') {
+                const fanGain = Math.floor(Math.random() * 50);
+                gameState.player.fans += fanGain;
+                resultMsg = `你据理力争的样子引起了争议，但也吸引了吃瓜群众！\n粉丝 +${fanGain}`;
+            } else {
+                const fanLoss = Math.floor(Math.random() * 10) + 5;
+                gameState.player.fans = Math.max(0, gameState.player.fans - fanLoss);
+                resultMsg = `你对普通读者的攻击性太强了，大家觉得你飘了。\n粉丝 -${fanLoss}`;
+            }
+        }
+
+        this.ui.showDialog({
+            title: "回复已发送",
+            text: resultMsg,
+            choices: [{ text: "返回工作", action: () => this.ui.closeDialog() }]
+        });
+        
+        this.ui.updateAll(gameState);
     }
 
     /**
@@ -176,19 +269,29 @@ class Game {
      * 【新增】步骤 3: 输入标题并开始
      */
     stepInputTitle(genre, style) {
-        // 关闭当前弹窗以便显示 prompt
-        // (有些浏览器会阻塞，简单的做法是直接调用 prompt)
+        // 关闭当前弹窗
+        this.ui.closeDialog();
+        
+        // 使用自定义的输入对话框替代prompt()
+        this.ui.showInputDialog({
+            title: "为漫画起名字",
+            text: `题材: ${genre.name} + 画风: ${style.name}\n给你的大作起个名字吧:`,
+            placeholder: "输入漫画标题",
+            defaultValue: "无题",
+            darkMode: true,
+            onConfirm: (title) => {
+                if (!title) return; // 取消则什么都不做
 
-        setTimeout(() => {
-            let title = prompt(`题材: ${genre.name} + 画风: ${style.name}\n给你的大作起个名字吧:`, "无题");
-            if (!title) return; // 取消则什么都不做
+                this.mangaSystem.startSerialization(title, genre.id, style.id);
 
-            this.mangaSystem.startSerialization(title, genre.id, style.id);
-
-            this.ui.showToast(`新连载《${title}》正式立项！`);
-            this.ui.closeDialog(); // 确保关闭之前的
-            this.ui.updateAll(gameState);
-        }, 100);
+                this.ui.showToast(`新连载《${title}》正式立项！`);
+                this.ui.updateAll(gameState);
+            },
+            onCancel: () => {
+                // 用户取消输入，返回上一步
+                this.stepSelectStyle(genre);
+            }
+        });
     }
 
     /**
@@ -288,6 +391,16 @@ class Game {
                 this.showAllocationMenu(work);
             }
         });
+        
+        // 返回选项
+        choices.push({
+            text: "🔙 返回",
+            action: () => {
+                this.currentDraft = null; // 清理当前草稿
+                this.ui.closeDialog();
+                this.handleWork(); // 返回连载管理界面
+            }
+        });
 
         this.ui.showDialog({
             title: "步骤 2/3: 分配灵感",
@@ -331,7 +444,15 @@ class Game {
                         this.handleDrawResult(result);
                     }
                 },
-                { text: "再改改...", action: () => this.showAllocationMenu(work) }
+                { text: "再改改...", action: () => this.showAllocationMenu(work) },
+                {
+                    text: "🔙 返回",
+                    action: () => {
+                        this.currentDraft = null; // 清理当前草稿
+                        this.ui.closeDialog();
+                        this.handleWork(); // 返回连载管理界面
+                    }
+                }
             ]
         });
     }
@@ -493,10 +614,23 @@ class Game {
                                         }
                                     }
 
-                                    // C. 只有当什么都没发生时，才关闭当前的“连载管理”窗口
-                                    // 如果发生了事件，我们保留那个事件的弹窗让玩家看
+                                    // D. 显示读者反馈
                                     if (!hasEvent) {
-                                        this.ui.closeDialog();
+                                        const work = gameState.mangaCareer.currentWork;
+                                        const feedback = this.mangaSystem.getReaderFeedback(work);
+                                        
+                                        // 显示读者反馈对话框
+                                        this.ui.showDialog({
+                                            title: "📢 读者反馈",
+                                            text: "读者们对最新一话的评价：",
+                                            choices: feedback.list.map(comment => ({
+                                                text: comment,
+                                                action: () => {}
+                                            })).concat([{
+                                                text: "继续创作",
+                                                action: () => this.ui.closeDialog()
+                                            }])
+                                        });
                                     }
 
                                     this.ui.updateAll(gameState);

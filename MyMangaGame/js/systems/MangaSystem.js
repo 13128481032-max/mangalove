@@ -106,6 +106,59 @@ export class MangaSystem {
                 effect: 'retention' // 特殊效果：下一话基础热度提升 
             } 
         ];
+        
+        // 读者评论库
+        this.commentPool = {
+            // 通用好评 (分数 >= 80)
+            high_score: [
+                "神作预定！这一话的分镜简直绝了！",
+                "每周指着这个活了，太太是神！",
+                "这就没了？短小无力！再给我画50页！",
+                "膝盖已献上，请收下我的推荐票。",
+                "我不允许还有人没看过这部宝藏漫画！"
+            ],
+            // 通用中评 (50 <= 分数 < 80)
+            mid_score: [
+                "画风还可以，但是剧情稍微有点拖。",
+                "打卡。希望能保持这个质量。",
+                "这一话感觉是过渡回？期待后续发展。",
+                "虽然老套，但就是很上头怎么回事...",
+                "这里的透视是不是有点怪？不过不影响观看。"
+            ],
+            // 通用差评 (分数 < 50)
+            low_score: [
+                "画崩了啊...作者最近是不是太累了？",
+                "剧情完全看不懂，是在乱画吗？",
+                "退钱！浪费我两分钟人生。",
+                "这人体结构是外星人吗？建议回去进修一下。",
+                "江郎才尽了吗？取关了。"
+            ],
+            // 题材专属评论
+            genres: {
+                'school_romance': [
+                    "啊啊啊啊按头小分队在哪里！亲下去啊！",
+                    "这是什么绝美爱情，我枯了。",
+                    "男主好帅！我也想要这样的学长！",
+                    "太甜了，今天的胰岛素这一话包了。"
+                ],
+                'horror_suspense': [
+                    "大半夜看的，现在不敢去厕所...",
+                    "这就是我要的恐怖感！背后发凉！",
+                    "最后那个眼神吓死爹了！",
+                    "如果是为了吓死我，那你成功了。"
+                ],
+                'boys_love': [
+                    "kswl! kswl!",
+                    "这是不付费能看的内容吗？太太好人一生平安！",
+                    "这对CP锁死，钥匙我吞了！"
+                ],
+                'ceo_romance': [
+                    "虽然土但是我也想被霸总壁咚...",
+                    "这总裁味儿太冲了，但我喜欢。",
+                    "女人，你成功引起了我的注意。"
+                ]
+            }
+        };
     }
 
     async init() {
@@ -173,6 +226,9 @@ export class MangaSystem {
 
         const result = this.calculateChapterScore(attributes, work.genreId, work.styleId, focus);
         
+        // 【新增】保存这一话的得分，用于反馈系统判断好评差评
+        work.lastChapterScore = result.score;
+        
         work.totalScore += result.score;
         work.maxIncom = Math.max(work.maxIncom, result.income);
         
@@ -210,6 +266,9 @@ export class MangaSystem {
             if (focus.stat_bonus.charm) totalScore *= focus.stat_bonus.charm;
         }
         totalScore *= (focus.score_mod || 1);
+        
+        // 【新增】保存这一话的得分，用于反馈系统判断好评差评
+        work.lastChapterScore = totalScore;
         
         // 3. 画风契合度修正
         let synergyMult = 1.0;
@@ -524,5 +583,47 @@ export class MangaSystem {
         
         // 替换模板中的占位符
         return randomTemplate.replace(/\{title\}/g, `《${title}》`);
+    }
+    
+    /**
+     * 【新增】生成读者反馈
+     * 根据作品当前的各项指标，生成一组看起来很真实的评论
+     */
+    getReaderFeedback(work) {
+        const comments = [];
+        const score = work.totalScore / (work.chapter || 1); // 估算平均分，或直接用上一话得分
+        // 注意：这里为了演示，假设上一话得分存在 work.lastChapterScore 中，如果没有就用随机数模拟
+        const lastScore = work.lastChapterScore || (50 + Math.random() * 50);
+
+        // 1. 确定基调
+        let poolKey = 'mid_score';
+        if (lastScore >= 80) poolKey = 'high_score';
+        else if (lastScore < 50) poolKey = 'low_score';
+
+        // 2. 抽取 2 条基础评论
+        const basePool = this.commentPool[poolKey];
+        for (let i = 0; i < 2; i++) {
+            comments.push(basePool[Math.floor(Math.random() * basePool.length)]);
+        }
+
+        // 3. 抽取 1 条题材专属评论 (如果有)
+        if (this.commentPool.genres[work.genreId]) {
+            const genrePool = this.commentPool.genres[work.genreId];
+            comments.push(genrePool[Math.floor(Math.random() * genrePool.length)]);
+        }
+
+        // 4. 生成一条“热评” (用于互动)
+        // 热评通常比较极端，或者提出具体问题
+        const hotComment = {
+            user: "热心网友_" + Math.floor(Math.random() * 1000),
+            content: comments[0], // 拿第一条当热评
+            likes: Math.floor(Math.random() * 500) + 10,
+            type: poolKey // 记录类型以便后续判断回复效果
+        };
+
+        return {
+            list: comments.sort(() => Math.random() - 0.5), // 打乱顺序
+            hotComment: hotComment
+        };
     }
 }
