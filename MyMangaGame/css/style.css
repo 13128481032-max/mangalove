@@ -639,15 +639,17 @@ h3 {
         left: 0;
         width: 100%;
         height: 100vh;
-        z-index: 1000;
+        z-index: 999; /* 确保在底部按钮之上但不影响其他UI */
         flex-direction: column;
         justify-content: flex-start;
-        padding: 20px 20px 100px; /* 增加底部内边距避免被按钮遮挡 */
+        padding: 20px;
         background-color: rgba(255, 240, 245, 0.98);
         backdrop-filter: blur(5px);
         box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-        animation: slideIn 0.3s ease-out;
+        animation: slideIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         overflow-y: auto; /* 允许内容滚动 */
+        -webkit-overflow-scrolling: touch; /* 添加原生滑动效果 */
+        scroll-behavior: smooth; /* 平滑滚动 */
     }
     
     #profile-sidebar.show-profile {
