@@ -3,10 +3,55 @@ import { gameState } from '../state.js';
 
 export class UIManager {
     constructor() {
-        // ============================================================
-        // 1. 初始化与 DOM 缓存
-        // ============================================================
+        // 初始化els对象，但暂时不获取DOM元素
+        this.els = {
+            // 顶部状态栏
+            money: null,
+            fans: null,
+            energy: null,
+            date: null,
+            energyFill: null,
+            energyBarContainer: null,
+            energyContainer: null,
+
+            // 属性面板数值
+            art: null,
+            story: null,
+            charm: null,
+            
+            // 侧边栏容器
+            sidebar: null,
+
+            // 右侧栏 (NPC列表)
+            npcContainer: null,
+            
+            // 剧情对话框 (覆盖层)
+            dialogOverlay: null,
+            
+            // 提示容器 (动态生成)
+            toastContainer: null
+        };
         
+        // 初始化事件处理函数
+    }
+
+    /**
+     * 【核心方法】初始化 (main.js 会调用)
+     */
+    init() {
+        console.log("UI Manager Initialized");
+        
+        // 在DOM完全加载后获取所有UI元素引用
+        this.collectUIElements();
+        
+        // 自动初始化飘字提示容器
+        this.initToastContainer();
+    }
+    
+    /**
+     * 收集所有UI元素的引用
+     */
+    collectUIElements() {
         this.els = {
             // --- 顶部状态栏 ---
             money: document.getElementById('stat-money'),
@@ -14,10 +59,12 @@ export class UIManager {
             energy: document.getElementById('stat-energy'), // 精力数值文本 (100/100)
             date: document.getElementById('stat-date'),
             
-            // --- 【关键修改】精力条 (使用 ID 精确获取，防止误操作其他进度条) ---
-            energyFill: document.getElementById('energy-fill'), 
+            // --- 精力条 ---
+            energyFill: document.getElementById('energy-fill'),
+            energyBarContainer: document.getElementById('energy-bar-container'),
+            energyContainer: document.querySelector('.energy-container'),
 
-            // --- 【新增】属性面板数值 (画工、剧情、魅力) ---
+            // --- 属性面板数值 (画工、剧情、魅力) ---
             art: document.getElementById('attr-art'),
             story: document.getElementById('attr-story'),
             charm: document.getElementById('attr-charm'),
@@ -32,19 +79,17 @@ export class UIManager {
             dialogOverlay: document.getElementById('dialogue-overlay'),
             
             // --- 提示容器 (动态生成) ---
-            toastContainer: null
+            toastContainer: null // 将在initToastContainer中初始化
         };
-
-        // 自动初始化飘字提示容器
-        this.initToastContainer();
     }
+    
 
-    /**
-     * 【核心方法】初始化 (main.js 会调用)
-     */
-    init() {
-        console.log("UI Manager Initialized");
-    }
+        
+        
+        
+        
+        
+        
 
     /**
      * 刷新所有界面

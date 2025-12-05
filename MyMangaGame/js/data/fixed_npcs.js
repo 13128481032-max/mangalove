@@ -17,6 +17,7 @@ export const fixedNPCs = {
         relation: 'brother', // 标记为骨科关系
         title: '某大学最年轻的教授 / 沈家现任家主',
         avatar: './assets/avatars/15.jpg', // 设置哥哥的头像为15.jpg
+        description: '令人安心的存在，但有时是很讨厌的哥哥',
         
         // 外貌特征 (用于生成描述)
         looks: {
@@ -52,7 +53,7 @@ export const fixedNPCs = {
                 { text: "把领口拉好。" },
                 { text: "这周末回家吃饭。爸妈那边……我来解决，你只需要露个面。" },
                 { text: "（目光扫过你的画稿）画技有进步。" },
-                { text: "离那个男的远点，他眼神不正。……我这是作为兄长的建议。" }
+                { text: "离那个男人远点。……我这是作为兄长的建议。" }
             ],
 
             // --- 阶段二：冰山下的火 (Restraint 30 - 79) ---

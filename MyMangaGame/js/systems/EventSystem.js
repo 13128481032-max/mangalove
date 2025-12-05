@@ -48,7 +48,44 @@ export class EventSystem {
             }
         }
 
-        // 2. 筛选符合当前时机的所有事件
+        // 2. 特殊处理：gloomy_chain事件需要基于特定NPC条件触发
+        if (triggerType === 'gloomy_chain' && gameState.npcs) {
+            // 获取所有gloomy性格的NPC
+            const gloomyNpcs = gameState.npcs.filter(npc => npc.personality === 'gloomy');
+            
+            if (gloomyNpcs.length > 0) {
+                // 遍历每个gloomy NPC，检查是否有符合条件的事件
+                for (const npc of gloomyNpcs) {
+                    // 筛选与该NPC相关的gloomy_chain事件
+                    const gloomyEvents = this.events.filter(evt => 
+                        evt.trigger === 'gloomy_chain' && 
+                        !gameState.flags[evt.id] &&
+                        (evt.conditions ? this.checkConditions({...evt.conditions, npc}, gameState) : true)
+                    );
+                    
+                    if (gloomyEvents.length > 0) {
+                        // 检查每个事件的trigger_val条件（好感度等）
+                        const validEvents = gloomyEvents.filter(evt => {
+                            if (!evt.trigger_val) return true; // 如果没有trigger_val条件，默认有效
+                            
+                            // 检查好感度是否达到要求
+                            return npc.favorability >= evt.trigger_val;
+                        });
+                        
+                        if (validEvents.length > 0) {
+                            // 随机选择一个有效事件并传递NPC信息
+                            const selectedEvent = this.pickRandom(validEvents);
+                            // 将NPC信息添加到事件中，以便在事件文本和效果中使用
+                            selectedEvent.targetNpc = npc;
+                            this.startEvent(selectedEvent, ui, gameState);
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. 普通事件处理：筛选符合当前时机的所有事件
         const candidates = this.events.filter(evt => 
             evt.trigger === triggerType && 
             !gameState.flags[evt.id] && 
@@ -81,6 +118,18 @@ export class EventSystem {
         if (conditions.dating_with) {
             const boyfriend = gameState.npcs && gameState.npcs.find(n => n.id === conditions.dating_with);
             if (!boyfriend || boyfriend.status !== 'dating') return false;
+        }
+
+        // 检查特定NPC的属性条件 (支持gloomy_chain事件)
+        if (conditions.trigger_val) {
+            const targetNpc = gameState.npcs && gameState.npcs.find(n => n.id === conditions.trigger_val.npc_id);
+            if (!targetNpc) return false;
+            
+            // 遍历所有需要检查的属性 (如 favorability)
+            for (const [attr, minVal] of Object.entries(conditions.trigger_val)) {
+                if (attr === 'npc_id') continue; // 跳过NPC ID字段
+                if (targetNpc[attr] < minVal) return false; // 检查属性是否达标
+            }
         }
 
         return true;

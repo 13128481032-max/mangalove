@@ -21,18 +21,21 @@
   "daily_work": [
     {
       "id": "work_normal",
+      "trigger": "daily_work",
       "weight": 50,
       "text": "今天画得很顺手，分镜一气呵成。",
       "effects": { "stress": -5, "art_exp": 10 }
     },
     {
       "id": "work_block",
+      "trigger": "daily_work",
       "weight": 20,
       "text": "卡文了...在数位板前坐了三个小时，只画了一个火柴人。",
       "effects": { "stress": 10, "energy": -10 }
     },
     {
       "id": "work_viral",
+      "trigger": "daily_work",
       "weight": 5,
       "text": "随手摸鱼的一张图在社交网络上爆火了！涨粉了！",
       "effects": { "fans": 500, "money": 200 }
@@ -192,12 +195,14 @@
     "jealousy_light": [
       {
         "id": "jealous_sunny",
-        "text": "{npc_name} 看着你手机里的聊天记录，委屈地撇了撇嘴：“这家伙是谁啊？比我还重要吗？”",
+        "trigger": "jealousy",
+        "text": "{npc_name} 看着你手机里的聊天记录，委屈地撇了撇嘴：\"这家伙是谁啊？比我还重要吗？\"",
         "npc_personality": "sunny"
       },
       {
         "id": "jealous_gloomy",
-        "text": "{npc_name} 沉默地站在阴影里，眼镜反着光：“你最近...很忙？身上的香水味换了呢。”",
+        "trigger": "jealousy",
+        "text": "{npc_name} 沉默地站在阴影里，眼镜反着光：\"你最近...很忙？身上的香水味换了呢。\"",
         "npc_personality": "gloomy",
         "effects": { "jealousy_add": 20 }
       }
@@ -218,18 +223,21 @@
     "gloomy_chain": [
       {
         "id": "stalking_start",
+        "trigger": "gloomy_chain",
         "trigger_val": 80,
         "text": "最近总感觉有人在盯着我...放在门口的快递好像被人动过。是错觉吗？",
         "bg_music": "creepy_theme"
       },
       {
         "id": "kidnap_moment",
+        "trigger": "gloomy_chain",
         "trigger_val": 100,
         "text": "回家开门的一瞬间，一块带着乙醚味的手帕捂住了口鼻。\n昏迷前，你听到了 {npc_name} 的声音：\"只有这样，你才只属于我一个人...\"",
         "next_scene": "basement"
       },
       {
         "id": "basement_daily_01",
+        "trigger": "gloomy_chain",
         "text": "醒来时发现脚踝上扣着锁链。房间里贴满了你的画稿照片。\n{npc_name} 端着粥走进来：\"乖，吃饭了。今天也不许出去哦。\"",
         "choices": [
           { "text": "打翻碗（反抗）", "effect": "punish" },

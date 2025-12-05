@@ -42,9 +42,9 @@
 
             <hr>
 
-            <div class="system-menu" style="margin-top:auto;">
-                <button id="btn-save" class="btn" style="width:100%; margin-bottom:10px">💾 保存进度</button>
-                <button id="btn-load" class="btn" style="width:100%">📁 读取存档</button>
+            <div class="system-menu" style="margin-top:auto; display:flex; gap:10px;">
+                <button id="btn-save" class="btn" style="flex:1; padding:8px 4px; font-size:12px">💾 保存</button>
+                <button id="btn-load" class="btn" style="flex:1; padding:8px 4px; font-size:12px">📁 读档</button>
             </div>
         </aside>
 
@@ -61,12 +61,14 @@
                     ❤️ <span id="stat-fans" class="stat-value">0</span>
                 </div>
                 
-                <div class="stat-item" style="flex-grow: 2; display: flex; flex-direction: column; justify-content: center;">
+                <div class="energy-container" style="flex-grow: 2; display: flex; flex-direction: column; justify-content: center;">
                     <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:2px;">
                         <span>⚡ 精力</span>
-                        <span id="stat-energy" style="font-weight:bold;">100/100</span>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <span id="stat-energy" style="font-weight:bold;">100/100</span>
+                        </div>
                     </div>
-                    <div style="width:100%; height:8px; background:#eee; border:1px solid #ccc; border-radius:4px; overflow:hidden;">
+                    <div id="energy-bar-container" style="width:100%; height:8px; background:#eee; border:1px solid #ccc; border-radius:4px; overflow:hidden;">
                         <div id="energy-fill" style="width:100%; height:100%; background:#FF69B4; transition: width 0.3s ease;"></div>
                     </div>
                 </div>

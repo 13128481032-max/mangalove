@@ -43,6 +43,10 @@ class Game {
         gameState.npcs.push(brother);
 
         this.bindEvents();
+        
+        // 初始化UI管理器，收集DOM元素
+        this.ui.init();
+        
         this.ui.updateAll(gameState);
         window.game = this;
 
@@ -222,6 +226,14 @@ class Game {
                         if (!hasEvent) {
                             // 传入 npcSystem 以支持修罗场/探班事件
                             const triggered = this.eventSystem.checkTriggers(gameState, 'work', this.ui, this.npcSystem);
+                            if (triggered) {
+                                hasEvent = true;
+                            }
+                        }
+                        
+                        // C. 检查是否触发日常工作事件
+                        if (!hasEvent) {
+                            const triggered = this.eventSystem.checkTriggers(gameState, 'daily_work', this.ui);
                             if (triggered) {
                                 hasEvent = true;
                             }
@@ -753,6 +765,13 @@ class Game {
                             if (result.addedFavorability > 0) {
                                 this.ui.showToast("互动成功！好感度+" + result.addedFavorability);
                             }
+                            
+                            // 检查是否触发嫉妒事件
+                            this.eventSystem.checkTriggers(gameState, 'jealousy', this.ui, this.npcSystem);
+                            
+                            // 检查是否触发特殊结局事件（gloomy_chain）
+                            this.eventSystem.checkTriggers(gameState, 'gloomy_chain', this.ui, this.npcSystem);
+                            
                             this.ui.closeDialog();
                         }
                     }]

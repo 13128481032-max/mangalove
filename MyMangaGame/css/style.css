@@ -81,28 +81,104 @@ body {
     padding: 20px;
     box-shadow: 8px 8px 0px rgba(74, 59, 59, 0.2);
 }
-/* --- 修改：固定顶部状态栏 --- */
-.status-header {
-    /* 使用 sticky 可以让它在父容器滚动时吸附在顶部 */
-    position: sticky; 
-    top: 0;
-    z-index: 1000; /* 保证它浮在所有内容上面 */
+
+/* 精力条相关样式已简化，不再支持收起功能 */
+
+/* =========================================
+   4. 响应式设计 (Mobile Optimization)
+   ========================================= */
+@media (max-width: 768px) {
+    /* 手机端布局调整 */
+    body {
+        overflow: auto;
+        height: auto;
+    }
     
-    background: rgba(255, 255, 255, 0.95); /* 稍微透明一点的背景 */
-    backdrop-filter: blur(5px); /* 毛玻璃效果，很高级 */
-    border-bottom: 2px solid var(--line-color);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    #game-container {
+        grid-template-columns: 1fr; /* 变为单列布局 */
+        grid-template-rows: auto 1fr;
+        height: auto;
+        min-height: 100vh;
+        padding: 10px;
+        margin: 5px;
+        width: calc(100% - 10px);
+    }
+    
+    .sidebar {
+        order: 2; /* 侧边栏放到下面 */
+        min-height: auto;
+    }
+    
+    .main-stage {
+        order: 1; /* 主舞台放到上面 */
+        padding-top: 0; /* 移除顶部空间 */
+    }
+    
+    /* 调整按钮大小，适合手机点击 */
+    .btn {
+        padding: 12px 20px !important;
+        font-size: 14px !important;
+        min-height: 44px; /* 符合移动端交互标准 */
+    }
+    
+    /* 调整精力条位置 */
+    .status-header {
+        padding: 15px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    /* 调整NPC列表布局 */
+    .npc-list {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 12px;
+    }
+    
+    /* 优化对话窗口 */
+    .dialogue-box {
+        margin: 20px;
+        max-width: calc(100% - 40px);
+    }
+}
+/* --- 修改：顶部状态栏改为普通定位 --- */
+.status-header {
+    /* 改为普通定位，与其他元素同一层级 */
+    position: static;
+    
+    background: var(--bg-card); /* 与卡片背景一致 */
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--radius-main);
     
     /* 保持原有的内边距 */
     padding: 10px 15px;
     margin-bottom: 20px;
+    box-shadow: none;
+    
+    /* 使用flex布局，在移动端自动换行 */
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    
+    /* 确保精力条容器能自适应宽度 */
+    .energy-container {
+        flex-grow: 1;
+        min-width: 150px;
+    }
+    
+    /* 状态项在移动端居中显示 */
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
 }
 
-/* 确保右侧主舞台可以滚动 */
+/* 主舞台样式 */
 .main-stage {
     overflow-y: auto;
-    max-height: 100vh; /* 限制高度为屏幕高度 */
-    padding-top: 0; /* 去掉顶部内边距，让 header 贴顶 */
+    max-height: 100%; /* 限制高度为父容器高度 */
+    padding-top: 0; /* 移除顶部空间 */
     position: relative;
 }
 /* 通用面板样式 */

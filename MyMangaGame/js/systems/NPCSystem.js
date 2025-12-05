@@ -258,47 +258,112 @@ export class NPCSystem {
 
         switch (type) {
             case 'chat':
-                addedFavorability = 2;
-                npc.favorability += addedFavorability;
-                // 从库里取一句随机的话
-                text = `【${npc.name}】\n` + this.getRandomText(npc, 'chat');
+                // 哥哥角色的聊天逻辑
+                if (npc.relation === 'brother') {
+                    addedFavorability = 5;
+                    npc.stats.affection += addedFavorability;
+                    // 聊天会略微降低克制值
+                    npc.stats.restraint -= 1;
+                    // 从库里取一句随机的话
+                    text = `【${npc.name}】\n` + this.getRandomText(npc, 'chat');
+                } else {
+                    // 普通NPC的聊天逻辑
+                    addedFavorability = 2;
+                    npc.favorability += addedFavorability;
+                    // 从库里取一句随机的话
+                    text = `【${npc.name}】\n` + this.getRandomText(npc, 'chat');
+                }
                 break;
 
             case 'date':
-                if (npc.favorability < 20) {
-                    success = false;
-                    text = `${npc.name} 婉拒了你的邀请："我们还不够熟吧？"`;
+                // 哥哥角色的特殊约会逻辑
+                if (npc.relation === 'brother') {
+                    const restraint = npc.stats?.restraint || 0;
+                    if (restraint > 20) {
+                        success = false;
+                        text = `${npc.name} 严肃地拒绝了你的邀请："我们是兄妹，这样不合适。"`;
+                    } else {
+                        addedFavorability = 15;
+                        npc.stats.affection += addedFavorability;
+                        // 约会会进一步降低理智值
+                        npc.stats.restraint -= 5;
+                        const dateText = this.getRandomText(npc, 'date');
+                        text = `你们度过了一段心跳加速的时光。\n\n${npc.name}: "${dateText}"`;
+                        
+                        if (npc.status !== 'dating' && npc.stats.affection >= 80) {
+                            npc.status = 'dating';
+                            text += `\n\n(❤ 你和哥哥还是迈出了那一步，${npc.name} 现在是你的恋人了！)`;
+                        }
+                    }
                 } else {
-                    addedFavorability = 10;
-                    npc.favorability += addedFavorability;
-                    const dateText = this.getRandomText(npc, 'date');
-                    text = `你们度过了一段浪漫的时光。\n\n${npc.name}: "${dateText}"`;
-                    
-                    if (npc.status !== 'dating' && npc.favorability >= 80) {
-                        npc.status = 'dating';
-                        text += `\n\n(❤ 关系升级！${npc.name} 现在是你的男朋友了！)`;
+                    // 普通NPC的约会逻辑
+                    if (npc.favorability < 20) {
+                        success = false;
+                        text = `${npc.name} 婉拒了你的邀请："我们还不够熟吧？"`;
+                    } else {
+                        addedFavorability = 10;
+                        npc.favorability += addedFavorability;
+                        const dateText = this.getRandomText(npc, 'date');
+                        text = `你们度过了一段浪漫的时光。\n\n${npc.name}: "${dateText}"`;
+                        
+                        if (npc.status !== 'dating' && npc.favorability >= 80) {
+                            npc.status = 'dating';
+                            text += `\n\n(❤ 关系升级！${npc.name} 现在是你的男朋友了！)`;
+                        }
                     }
                 }
                 break;
 
             case 'gift':
-                addedFavorability = 15;
-                npc.favorability += addedFavorability;
-                const giftList = this.interactionDB.gift?.default || ["他收下了礼物。"];
-                text = this.randomPick(giftList);
+                // 哥哥角色的送礼逻辑
+                if (npc.relation === 'brother') {
+                    addedFavorability = 20;
+                    npc.stats.affection += addedFavorability;
+                    // 送礼会显著降低克制值
+                    npc.stats.restraint -= 8;
+                    const giftList = this.interactionDB.gift?.default || ["他收下了礼物。"];
+                    text = this.randomPick(giftList);
+                } else {
+                    // 普通NPC的送礼逻辑
+                    addedFavorability = 15;
+                    npc.favorability += addedFavorability;
+                    const giftList = this.interactionDB.gift?.default || ["他收下了礼物。"];
+                    text = this.randomPick(giftList);
+                }
                 break;
 
             case 'provoke':
-                // 减少好感度
-                addedFavorability = -10;
-                npc.favorability += addedFavorability;
-                
-                // 确保好感度不为负数
-                if (npc.favorability < 0) npc.favorability = 0;
-                
-                // 获取性格对应的负面回应
-                const responses = negativeResponses[npc.personality] || negativeResponses.sunny;
-                text = `【${npc.name}】\n` + this.randomPick(responses);
+                // 哥哥角色的挑衅逻辑
+                if (npc.relation === 'brother') {
+                    // 挑衅会显著减少好感度
+                    addedFavorability = -15;
+                    npc.stats.affection += addedFavorability;
+                    // 但会降低克制值
+                    npc.stats.restraint -= 5;
+                    
+                    // 确保好感度不为负数
+                    if (npc.stats.affection < 0) npc.stats.affection = 0;
+                    
+                    // 哥哥的特殊回应
+                    const brotherResponses = [
+                        "你这是在故意激怒我吗？",
+                        "别闹了，我不想和你吵架。",
+                        "（眼神变得阴沉）你知道这样会让我很生气吗？",
+                        "我们是兄妹，为什么要这样对我？"
+                    ];
+                    text = `${npc.name}: "${this.randomPick(brotherResponses)}"`;
+                } else {
+                    // 普通NPC的挑衅逻辑
+                    addedFavorability = -10;
+                    npc.favorability += addedFavorability;
+                    
+                    // 确保好感度不为负数
+                    if (npc.favorability < 0) npc.favorability = 0;
+                    
+                    // 获取性格对应的负面回应
+                    const responses = negativeResponses[npc.personality] || negativeResponses.sunny;
+                    text = `${npc.name}: "${this.randomPick(responses)}"`;
+                }
                 break;
         }
 
