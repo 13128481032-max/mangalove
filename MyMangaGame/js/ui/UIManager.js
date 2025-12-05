@@ -288,7 +288,10 @@ export class UIManager {
                 </div>
 
                 <div style="margin: 8px 0; font-size:12px; color:#666;">
-                    好感: ${hearts} <span style="color:#ccc; font-size:10px;">(${npc.favorability || 0})</span>
+                    ${npc.relation === 'brother' ? 
+                        `好感: ${hearts} <span style="color:#ccc; font-size:10px;">(${npc.stats?.affection || 0})</span>` : 
+                        `好感: ${hearts} <span style="color:#ccc; font-size:10px;">(${npc.favorability || 0})</span>`
+                    }
                 </div>
                 
                 <button class="btn npc-interact-btn" style="width:100%; padding: 6px;" 
@@ -296,6 +299,39 @@ export class UIManager {
                     💬 互动
                 </button>
             `;
+            
+            // 骨科专属样式
+            if (npc.relation === 'brother') {
+                // 骨科专属样式 - 暗金色边框
+                card.style.border = '2px solid #B8860B';
+                card.style.borderRadius = '8px';
+                
+                const restraint = npc.stats?.restraint || 0;
+                const restraintPct = Math.min(100, Math.max(0, restraint)); // 确保在0-100之间
+                
+                // 动态文案：根据理智值变化
+                let stateText = "克制中";
+                let barColor = "#4A90E2"; // 蓝色代表理智
+                
+                if (restraintPct < 60) { stateText = "动摇"; barColor = "#F5A623"; } // 橙色
+                if (restraintPct < 20) { stateText = "⚠️ 危险边缘"; barColor = "#D0021B"; } // 红色
+
+                card.innerHTML += `
+                    <div style="margin-top:8px; font-size:12px; color:#666;">
+                        <div style="display:flex; justify-content:space-between;">
+                            <span>理智防线: ${stateText}</span>
+                            <span>${restraintPct}%</span>
+                        </div>
+                        <div style="width:100%; height:6px; background:#EEE; border-radius:3px; margin-top:4px;">
+                            <div style="width:${restraintPct}%; height:100%; background:${barColor}; transition:width 0.5s;"></div>
+                        </div>
+                    </div>
+                `;
+                
+                // 给卡片加一个特殊的边框颜色，暗示血缘羁绊
+                card.style.borderColor = "#D4AF37"; // 暗金色
+            }
+            
             container.appendChild(card);
         });
         
@@ -374,7 +410,6 @@ export class UIManager {
         // 2. 动态创建对话框 DOM
         const box = document.createElement('div');
         box.className = 'dialogue-box'; 
-        box.style.backgroundColor = '#fff';
         box.style.padding = '20px';
         box.style.borderRadius = '8px';
         box.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
@@ -382,11 +417,19 @@ export class UIManager {
         box.style.width = '90%';
         box.style.maxHeight = '80vh';
         box.style.overflow = 'auto';
-        box.style.backgroundColor = '#ffffff';
-        box.style.border = '3px solid #4A2C35';
-        box.style.color = '#333333';
         box.style.position = 'relative';
         box.style.zIndex = '10000';
+        
+        // 暗黑模式支持
+        if (options.darkMode) {
+            box.style.backgroundColor = '#222222';
+            box.style.border = '3px solid #ff6b6b';
+            box.style.color = '#ffffff';
+        } else {
+            box.style.backgroundColor = '#ffffff';
+            box.style.border = '3px solid #4A2C35';
+            box.style.color = '#333333';
+        }
         
         console.log('✅ 对话框box元素创建完成，准备添加内容');
         
@@ -395,7 +438,7 @@ export class UIManager {
             const h2 = document.createElement('h2');
             h2.textContent = options.title;
             h2.style.marginTop = '0';
-            h2.style.color = '#333';
+            h2.style.color = options.darkMode ? '#ff6b6b' : '#333';
             box.appendChild(h2);
         }
 
@@ -421,7 +464,8 @@ export class UIManager {
             choices.forEach(choice => {
                 const btn = document.createElement('button');
                 btn.className = 'btn';
-                btn.textContent = choice.text || "继续";
+// 生成按钮 - 同时支持label和text属性
+                btn.textContent = choice.label || choice.text || "继续";
                 btn.style.padding = '10px 15px';
                 btn.style.border = 'none';
                 btn.style.borderRadius = '4px';
@@ -634,5 +678,45 @@ export class UIManager {
             toast.style.opacity = '0';
             setTimeout(() => toast.remove(), 300);
         }, 3000);
+    };
+
+    renderEnding(title, text, type) {
+        const endingOverlay = document.createElement('div');
+        endingOverlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: ${type === 'bad' ? '#000' : '#FFF0F5'};
+            color: ${type === 'bad' ? '#FFF' : '#333'};
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 40px;
+            animation: fadeIn 2s;
+        `;
+
+        endingOverlay.innerHTML = `
+            <h1 style="font-size: 40px; margin-bottom: 20px; font-family: var(--font-pixel)">${title}</h1>
+            <p style="font-size: 18px; line-height: 1.8; max-width: 600px; margin-bottom: 40px;">${text.replace(/\n/g, '<br>')}</p>
+            
+            <div style="border: 2px solid currentColor; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+                <h3>最终成绩</h3>
+                <p>粉丝: ${gameState.player.fans}</p>
+                <p>存款: ¥${gameState.player.money}</p>
+                <p>达成成就: ${gameState.achievements.length} 个</p>
+            </div>
+
+            <button id="btn-restart" class="btn" style="padding: 15px 40px; font-size: 20px;">
+                ↻ 开启二周目 (继承天赋)
+            </button>
+        `;
+
+        document.body.appendChild(endingOverlay);
+
+        document.getElementById('btn-restart').onclick = () => {
+            // 这里执行重置逻辑，保留 achievements 数据
+            location.reload();
+        };
     };
 }

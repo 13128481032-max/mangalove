@@ -1,4 +1,5 @@
 import { gameState } from '../state.js';
+import { fixedNPCs } from '../data/fixed_npcs.js';
 
 export class NPCSystem {
     constructor() {
@@ -350,14 +351,37 @@ export class NPCSystem {
         // 获取对应性格的台词，如果没有则用默认
         return lines[npc.personality] || "……再见。";
     }
-
+    
+     /**
+     * 获取哥哥对象（如果还没出现过，就初始化他）
+     */
+    getOrInitBrother() {
+        // 1. 检查存档里是否已经有哥哥了
+        let brother = gameState.npcs.find(n => n.id === fixedNPCs.brother.id);
+        
+        if (!brother) {
+            // 2. 如果没有，根据配置初始化一个
+            brother = {
+                ...fixedNPCs.brother,
+                status: 'normal', // normal, watching(暗中观察), broken(黑化)
+                met: false, // 是否正式重逢
+                avatar: './assets/avatars/15.jpg' // 设置哥哥的头像为15.jpg
+            };
+            // 加入到 NPC 列表
+            gameState.npcs.push(brother);
+        }
+        return brother;
+    }
     /**
      * 【新增】执行断联逻辑
      * @returns {Object} 结果 { success, text, isBlackened }
      */
     attemptBreakContact(npc) {
-        // 1. 如果只是普通朋友/陌生人 -> 直接断联
-        if (npc.status !== 'dating') {
+        // 基础黑化率
+        let risk = 0.3;
+        
+        // 1. 处理普通NPC非恋爱状态
+        if (npc.relation !== 'brother' && npc.status !== 'dating') {
             npc.status = 'stranger'; // 或者 'broken' (老死不相往来)
             npc.favorability = 0;
             return {
@@ -366,19 +390,42 @@ export class NPCSystem {
                 text: `你删除了 ${npc.name} 的联系方式。\n从此你们成为了陌路人。`
             };
         }
+        
+        // 2. 特殊处理骨科NPC
+        if (npc.relation === 'brother') {
+            // 骨科NPC非恋爱状态
+            if (npc.status !== 'dating') {
+                npc.status = 'stranger';
+                if (npc.stats) {
+                    npc.stats.affection = 0;
+                    // 断联会大幅降低理智值
+                    npc.stats.restraint -= 20;
+                    if (npc.stats.restraint < 0) npc.stats.restraint = 0;
+                }
+                return {
+                    success: true,
+                    isBlackened: false,
+                    text: `你试图与 ${npc.name} 保持距离。\n他看起来很受伤，但还是尊重了你的选择。`
+                };
+            } else {
+                // 骨科NPC作为恋人 -> 判定是否黑化
+                // 骨科NPC分手黑化率更高
+                risk = 0.7; // 骨科NPC分手黑化率70%
+                // 如果理智值已经很低，黑化率更高
+                if (npc.stats && npc.stats.restraint < 50) {
+                    risk = 1.0; // 理智值低于50时必定黑化
+                }
+            }
+        } else {
+            // 3. 普通NPC作为恋人 -> 性格修正黑化率
+            if (npc.personality === 'gloomy') risk += 0.4;  // 阴湿男极易黑化 (70%)
+            if (npc.personality === 'gentle') risk += 0.3;  // 腹黑男容易黑化 (60%)
+            if (npc.personality === 'stoic') risk += 0.2;   // 高岭之花 (50%)
+            if (npc.personality === 'arrogant') risk += 0.1;// 霸总 (40%)
+            // sunny 和 flirty 保持基础概率
+        }
 
-        // 2. 如果是恋人 -> 判定是否黑化
-        // 基础黑化率 30%
-        let risk = 0.3;
-
-        // 性格修正
-        if (npc.personality === 'gloomy') risk += 0.4;  // 阴湿男极易黑化 (70%)
-        if (npc.personality === 'gentle') risk += 0.3;  // 腹黑男容易黑化 (60%)
-        if (npc.personality === 'stoic') risk += 0.2;   // 高岭之花 (50%)
-        if (npc.personality === 'arrogant') risk += 0.1;// 霸总 (40%)
-        // sunny 和 flirty 保持基础概率
-
-        // 3. 判定结果
+        // 4. 判定结果 (适用于所有NPC作为恋人的情况)
         if (Math.random() < risk) {
             // === 触发黑化囚禁 ===
             npc.status = 'imprisoned'; // 修改状态为监禁
@@ -395,7 +442,15 @@ export class NPCSystem {
         } else {
             // === 正常和平分手 ===
             npc.status = 'broken'; // 分手状态
-            npc.favorability = -50; // 变成仇人
+            
+            // 根据NPC类型设置不同的属性
+            if (npc.relation === 'brother' && npc.stats) {
+                npc.stats.affection = -50; // 骨科NPC的好感度
+                npc.stats.restraint -= 10; // 分手会降低理智值
+                if (npc.stats.restraint < 0) npc.stats.restraint = 0;
+            } else {
+                npc.favorability = -50; // 普通NPC的好感度
+            }
             
             const line = this.getBreakupLine(npc, 'normal');
             

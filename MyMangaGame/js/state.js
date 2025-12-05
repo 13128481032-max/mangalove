@@ -5,7 +5,17 @@
  */
 
 // ==========================================
-// 1. 定义初始状态 (Configuration)
+// 1. 游戏配置常量 (Configuration Constants)
+// ==========================================
+export const gameConfig = {
+    MAX_DAYS: 180,           // 只有半年的时间证明自己 
+    GOAL_FANS: 50000,        // 目标：5万粉丝（一周目很难达到） 
+    GOAL_MONEY: 100000,      // 目标：赚10万 
+    INHERIT_RATE: 0.1        // 二周目继承 10% 的金钱 
+};
+
+// ==========================================
+// 2. 定义初始状态 (Initial State)
 // ==========================================
 const initialState = {
     // --- 玩家基础数据 ---
@@ -13,16 +23,17 @@ const initialState = {
         name: "默认女主名",
         energy: 100,        // 当前精力
         maxEnergy: 100,     // 精力上限
-        money: 1000,        // 初始资金
+        money: 1000,        // 离家出走带的启动资金，很少
         fans: 0,            // 粉丝数
         
         // --- 核心属性 ---
         attributes: {
-            art: 10,        // 画功
-            story: 10,      // 编剧
-            charm: 10,      // 魅力
+            art: 5,        // 画功
+            story: 5,      // 编剧
+            charm: 5,      // 魅力
             darkness: 0     // 黑化值
-        }
+        },
+        title: "无名之辈"
     },
 
     // --- 漫画经营数据 (已合并修复) ---
@@ -83,6 +94,12 @@ const initialState = {
         weather: "sunny",   // 天气
         location: "home"    // home, park, cafe, basement
     },
+    
+    // --- 游戏时间配置 ---
+    gameTime: {
+        day: 1,
+        deadline: gameConfig.MAX_DAYS
+    },
 
     // --- 剧情标记 (Flags) ---
     flags: {
@@ -95,7 +112,13 @@ const initialState = {
     settings: {
         bgmVolume: 0.5,
         textSpeed: "normal"
-    }
+    },
+    
+    // --- 成就记录 (永久保存) ---
+    achievements: [],
+    
+    // --- 结局历史 ---
+    endingsUnlock: []
 };
 
 // ==========================================
