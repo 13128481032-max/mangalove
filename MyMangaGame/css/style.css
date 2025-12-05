@@ -100,8 +100,8 @@ body {
         height: auto;
         min-height: 100vh;
         padding: 10px;
-        margin: 5px;
-        width: calc(100% - 10px);
+        margin: 0;
+        width: 100%;
     }
     
     .sidebar {
@@ -489,29 +489,40 @@ h3 {
         box-shadow: none;
     }
 
-    /* 手机端顶部栏 */
+    /* 手机端个人档案栏 - 优化布局 */
     .sidebar {
         display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        padding: 10px;
+        flex-direction: column;
+        padding: 15px;
         border-bottom: 2px solid var(--border-color);
         box-shadow: 0 4px 0 rgba(0,0,0,0.05);
         border-radius: 12px;
-        justify-content: space-between;
-        align-items: center;
+        gap: 15px;
     }
 
-    /* 隐藏标题，但保留分隔线 */
-    .sidebar h2, .sidebar h3 { display: none; }
-    .sidebar hr { display: block; margin: 10px 0; width: 100%; }
+    /* 显示标题以便用户识别 */
+    .sidebar h2 {
+        display: block;
+        font-size: 20px;
+        border-bottom: 2px dashed var(--accent);
+        padding-bottom: 8px;
+        margin-bottom: 5px;
+        color: var(--accent-hover);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        text-align: center;
+    }
+    
+    .sidebar h3 { display: none; }
+    .sidebar hr { display: block; margin: 10px 0; width: 100%; border: none; border-top: 1px solid var(--border-color); }
     
     /* 确保侧边栏内部元素正确排列 */
     .stats-panel {
         display: flex;
         flex-direction: row;
+        justify-content: space-around;
         gap: 15px;
-        margin-right: 20px;
+        width: 100%;
         flex-wrap: wrap;
     }
     
@@ -520,34 +531,53 @@ h3 {
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 8px;
+        padding: 12px 15px;
         border-radius: 8px;
         background-color: var(--bg-card);
         border: 1px solid #DDD;
+        font-size: 16px;
+        min-width: 100px;
+        box-shadow: var(--shadow-hard);
+    }
+    
+    /* 调整统计项文字大小 */
+    .stat-row span:first-child {
         font-size: 14px;
-        min-width: 80px;
+        color: var(--text-sub);
+        margin-bottom: 5px;
+    }
+    
+    .stat-row span:last-child {
+        font-size: 18px;
+        font-weight: bold;
+        color: var(--accent-hover);
     }
     
     .manga-panel {
         width: 100%;
-        margin: 10px 0;
-        padding: 10px;
+        padding: 15px;
         border-radius: 8px;
         background-color: var(--bg-card);
+        border: 1px solid #DDD;
+        box-shadow: var(--shadow-hard);
+        font-size: 16px;
     }
     
     .system-menu {
         display: flex;
-        gap: 10px;
-        margin-top: 10px;
+        gap: 15px;
+        width: 100%;
         flex-wrap: wrap;
     }
     
     .system-menu .btn {
         flex: 1;
-        min-width: 100px;
-        padding: 8px 4px;
-        font-size: 12px;
+        min-width: 130px;
+        padding: 12px 8px;
+        font-size: 14px;
+        font-weight: bold;
+        box-shadow: var(--shadow-btn);
+        transition: all 0.1s;
     }
 
     /* 手机端对话框 */
