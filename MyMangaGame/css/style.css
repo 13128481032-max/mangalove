@@ -491,20 +491,63 @@ h3 {
 
     /* 手机端顶部栏 */
     .sidebar {
+        display: flex;
         flex-direction: row;
         flex-wrap: wrap;
         padding: 10px;
         border-bottom: 2px solid var(--border-color);
         box-shadow: 0 4px 0 rgba(0,0,0,0.05);
         border-radius: 12px;
+        justify-content: space-between;
+        align-items: center;
     }
 
-    .sidebar h2, .sidebar hr, .sidebar h3 { display: none; }
-
+    /* 隐藏标题，但保留分隔线 */
+    .sidebar h2, .sidebar h3 { display: none; }
+    .sidebar hr { display: block; margin: 10px 0; width: 100%; }
+    
+    /* 确保侧边栏内部元素正确排列 */
+    .stats-panel {
+        display: flex;
+        flex-direction: row;
+        gap: 15px;
+        margin-right: 20px;
+        flex-wrap: wrap;
+    }
+    
     .stat-row {
-        font-size: 14px;
-        padding: 4px 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
+        border-radius: 8px;
+        background-color: var(--bg-card);
         border: 1px solid #DDD;
+        font-size: 14px;
+        min-width: 80px;
+    }
+    
+    .manga-panel {
+        width: 100%;
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: 8px;
+        background-color: var(--bg-card);
+    }
+    
+    .system-menu {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .system-menu .btn {
+        flex: 1;
+        min-width: 100px;
+        padding: 8px 4px;
+        font-size: 12px;
     }
 
     /* 手机端对话框 */
