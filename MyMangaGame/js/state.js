@@ -53,7 +53,9 @@ const initialState = {
         history: [],        // 存放已完结作品的历史记录 (合并了 completedWorks)
         
         // 当前正在创作的作品 (如果没有则为 null)
-        currentWork: null 
+        currentWork: null,
+        // 剧情焦点效果记录
+        focusEffects: [] 
         /* currentWork 结构示例 (兼容单次创作与连载):
         {
             title: "霸道总裁爱上我",

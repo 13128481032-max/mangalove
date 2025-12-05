@@ -46,6 +46,11 @@
     padding: 0;
 }
 
+/* 默认隐藏移动端个人档案入口按钮 */
+#btn-profile {
+    display: none;
+}
+
 body {
     font-family: var(--font-pixel); /* 应用像素字体 */
     /* 背景制作：粉色底 + 可爱的波点纹理 */
@@ -373,6 +378,8 @@ h3 {
     text-align: center;
     color: var(--text-sub);
     position: relative;
+    width: 100%;
+    overflow: hidden;
 }
 .manga-workspace::after {
     content: "✎"; /* 装饰图标 */
@@ -491,6 +498,9 @@ h3 {
 
     /* 手机端个人档案栏 - 优化布局 */
     .sidebar {
+        order: 2; /* 侧边栏放到下面 */
+        min-width: 100%; /* 确保宽度足够 */
+        width: 100%;
         display: flex;
         flex-direction: column;
         padding: 15px;
@@ -498,6 +508,7 @@ h3 {
         box-shadow: 0 4px 0 rgba(0,0,0,0.05);
         border-radius: 12px;
         gap: 15px;
+        overflow-x: hidden;
     }
 
     /* 显示标题以便用户识别 */
@@ -520,10 +531,22 @@ h3 {
     .stats-panel {
         display: flex;
         flex-direction: row;
-        justify-content: space-around;
-        gap: 15px;
+        justify-content: space-between;
+        gap: 10px;
         width: 100%;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 5px;
+    }
+    
+    /* 移除滚动条但保留滚动功能 */
+    .stats-panel::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .stats-panel {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
     }
     
     .stat-row {
@@ -531,36 +554,41 @@ h3 {
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 12px 15px;
+        padding: 10px 12px;
         border-radius: 8px;
         background-color: var(--bg-card);
         border: 1px solid #DDD;
-        font-size: 16px;
-        min-width: 100px;
+        font-size: 15px;
+        min-width: 90px;
         box-shadow: var(--shadow-hard);
+        flex-shrink: 0;
     }
     
     /* 调整统计项文字大小 */
     .stat-row span:first-child {
-        font-size: 14px;
+        font-size: 13px;
         color: var(--text-sub);
-        margin-bottom: 5px;
+        margin-bottom: 4px;
+        text-align: center;
+        width: 100%;
     }
     
     .stat-row span:last-child {
-        font-size: 18px;
+        font-size: 17px;
         font-weight: bold;
         color: var(--accent-hover);
+        text-align: center;
     }
     
     .manga-panel {
         width: 100%;
-        padding: 15px;
+        padding: 12px;
         border-radius: 8px;
         background-color: var(--bg-card);
         border: 1px solid #DDD;
         box-shadow: var(--shadow-hard);
-        font-size: 16px;
+        font-size: 15px;
+        overflow: hidden;
     }
     
     .system-menu {
@@ -572,14 +600,79 @@ h3 {
     
     .system-menu .btn {
         flex: 1;
-        min-width: 130px;
+        min-width: 120px;
         padding: 12px 8px;
         font-size: 14px;
         font-weight: bold;
         box-shadow: var(--shadow-btn);
         transition: all 0.1s;
     }
+    
+    /* 调整移动端漫画面板 */
+    #manga-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px;
+        border: 1px solid #EEE;
+        border-radius: 8px;
+        background: #FFF;
+        width: 100%;
+        overflow: hidden;
+        font-size: 14px;
+    }
+    
+    /* 确保移动端游戏容器宽度正确 */
+    #game-container {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        padding: 5px;
+        overflow-x: hidden;
+    }
 
+    /* 手机端个人档案控制 */
+    #profile-sidebar {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        z-index: 1000;
+        flex-direction: column;
+        justify-content: flex-start;
+        padding: 20px;
+        background-color: rgba(255, 240, 245, 0.98);
+        backdrop-filter: blur(5px);
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    #profile-sidebar.show-profile {
+        display: flex;
+    }
+    
+    @keyframes slideIn {
+        from {
+            transform: translateX(-100%);
+        }
+        to {
+            transform: translateX(0);
+        }
+    }
+    
+    /* 手机端个人档案入口按钮 */
+    #btn-profile {
+        display: block;
+        background-color: var(--accent);
+        color: var(--accent-text);
+    }
+    
+    #btn-profile:hover {
+        background-color: var(--accent-hover);
+    }
+    
     /* 手机端对话框 */
     #dialogue-overlay {
         padding: 10px;

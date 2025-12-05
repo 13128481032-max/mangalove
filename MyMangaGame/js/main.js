@@ -18,6 +18,7 @@ class Game {
         this.achievementSystem = new AchievementSystem();
         this.endingSystem = new EndingSystem();
         this.currentDatingTarget = null; // 当前约会目标
+        this.currentDraft = null; // 当前草稿信息
     }
 
     async init() {
@@ -62,12 +63,40 @@ class Game {
         const btnRest = document.getElementById('btn-rest');
         const btnSave = document.getElementById('btn-save');
         const btnLoad = document.getElementById('btn-load');
+        const btnProfile = document.getElementById('btn-profile');
+        const btnBack = document.getElementById('btn-back');
 
         if (btnDraw) btnDraw.addEventListener('click', () => this.handleWork());
         if (btnOut) btnOut.addEventListener('click', () => this.handleGoOut());
         if (btnRest) btnRest.addEventListener('click', () => this.handleRest());
         if (btnSave) btnSave.addEventListener('click', () => this.handleSave());
         if (btnLoad) btnLoad.addEventListener('click', () => this.handleLoad());
+        if (btnProfile) btnProfile.addEventListener('click', () => this.handleProfile());
+        if (btnBack) btnBack.addEventListener('click', () => this.handleBack());
+    }
+    
+    handleProfile() {
+        const profileSidebar = document.getElementById('profile-sidebar');
+        const isMobile = window.innerWidth < 768;
+        
+        if (isMobile) {
+            // 在手机端切换显示/隐藏
+            if (profileSidebar.classList.contains('show-profile')) {
+                profileSidebar.classList.remove('show-profile');
+            } else {
+                profileSidebar.classList.add('show-profile');
+            }
+        }
+    }
+
+    handleBack() {
+        const profileSidebar = document.getElementById('profile-sidebar');
+        const isMobile = window.innerWidth < 768;
+        
+        if (isMobile && profileSidebar.classList.contains('show-profile')) {
+            // 在手机端且个人档案显示时，隐藏它
+            profileSidebar.classList.remove('show-profile');
+        }
     }
 
     // ==========================================
@@ -100,15 +129,18 @@ class Game {
             return;
         }
 
-        // 2. 连载中流程 (保持不变，增加显示画风)
+        // 2. 连载中流程 - 新版
         this.ui.showDialog({
             title: `连载中: 《${work.title}》`,
-            // 在这里把画风显示出来
-            text: `题材: ${work.genreName} | 画风: ${work.styleName || '标准'}\n当前: 第 ${work.chapter} 话 | 总分: ${work.totalScore.toFixed(0)}\n排名: No.${career.currentRank}`,
+            text: `第 ${work.chapter} 话 | 人气: ${gameState.player.fans}\n状态: 灵感充沛`,
             choices: [
                 {
-                    text: `🎨 绘制第 ${work.chapter + 1} 话`,
-                    action: () => this.processDrawChapter()
+                    text: "✍️ 开始构思新一话", // 进入新流程
+                    action: () => this.step1_SelectFocus(work)
+                },
+                {
+                    text: "📈 查看读者反馈", // 可以在这里加个简单的评论系统
+                    action: () => this.ui.showToast("还没做这个功能...")
                 },
                 {
                     text: "🏁 完结撒花",
@@ -163,6 +195,209 @@ class Game {
      * 🎨 绘制漫画章节逻辑
      * (包含：收益计算、画风评价、夺冠检测、随机事件)
      */
+    /**
+     * 阶段 1: 选择本话侧重点 (策略选择)
+     */
+    step1_SelectFocus(work) {
+        const focuses = this.mangaSystem.plotFocuses;
+        
+        const choices = focuses.map(f => ({
+            text: `${f.name}`,
+            action: () => this.step2_AllocatePoints(work, f)
+        }));
+        
+        this.ui.showDialog({
+            title: "步骤 1/3: 确定本话大纲",
+            text: "这一话主要讲什么内容？\n不同的侧重点会影响最终的评分倾向。",
+            choices: choices.concat([{ text: "返回", action: () => this.handleWork() }])
+        });
+    }
+
+    /**
+     * 阶段 2: 灵感分配 (资源管理)
+     * 这里做一个简化版的分配，通过对话选项实现
+     */
+    step2_AllocatePoints(work, focus) {
+        // 基础灵感点 = 玩家精力 * 0.1 + 随机波动
+        let totalIP = Math.floor(gameState.player.energy * 0.15) + Math.floor(Math.random() * 5);
+        
+        this.currentDraft = {
+            focus: focus,
+            baseIP: totalIP,
+            allocated: { art: 0, story: 0, charm: 0 }
+        };
+
+        this.showAllocationMenu(work);
+    }
+
+    showAllocationMenu(work) {
+        const draft = this.currentDraft;
+        const remaining = draft.baseIP - (draft.allocated.art + draft.allocated.story + draft.allocated.charm);
+
+        let text = `【本话重点】：${draft.focus.name}\n`;
+        text += `【可用灵感】：${remaining} 点\n`;
+        text += `----------------\n`;
+        text += `🖌️ 画面: ${draft.allocated.art}\n`;
+        text += `📝 剧情: ${draft.allocated.story}\n`;
+        text += `✨ 演出: ${draft.allocated.charm}\n`;
+
+        const choices = [];
+
+        // 分配选项
+        if (remaining > 0) {
+            choices.push({ text: "加点：🖌️ 画面 (+2)", action: () => { draft.allocated.art += 2; this.showAllocationMenu(work); } });
+            choices.push({ text: "加点：📝 剧情 (+2)", action: () => { draft.allocated.story += 2; this.showAllocationMenu(work); } });
+            choices.push({ text: "加点：✨ 演出 (+2)", action: () => { draft.allocated.charm += 2; this.showAllocationMenu(work); } });
+            // 一键梭哈
+            choices.push({
+                    text: "🎲 随机分配",
+                    action: () => {
+                        // 简单的随机分配逻辑
+                        let availablePoints = remaining;
+                        while(availablePoints > 0) {
+                             const r = Math.random();
+                             if(r < 0.33) {
+                                 draft.allocated.art++;
+                                 availablePoints--;
+                             } else if(r < 0.66) {
+                                 draft.allocated.story++;
+                                 availablePoints--;
+                             } else {
+                                 draft.allocated.charm++;
+                                 availablePoints--;
+                             }
+                        }
+                        this.step3_Finalize(work);
+                    }
+                });
+        }
+
+        // 完成选项
+        if (remaining <= 2) {
+            choices.push({
+                text: "✅ 完成草稿，准备描线",
+                action: () => this.step3_Finalize(work)
+            });
+        }
+
+        // 重置
+        choices.push({
+            text: "🔄 重置点数",
+            action: () => {
+                draft.allocated = { art: 0, story: 0, charm: 0 };
+                this.showAllocationMenu(work);
+            }
+        });
+
+        this.ui.showDialog({
+            title: "步骤 2/3: 分配灵感",
+            text: text,
+            choices: choices
+        });
+    }
+
+    /**
+     * 阶段 3: 最终结算 (包含风险判定)
+     */
+    step3_Finalize(work) {
+        const draft = this.currentDraft;
+        
+        // 计算基础消耗
+        const baseCost = this.mangaSystem.genres[work.genreId].cost_energy || 20;
+        const finalCost = Math.floor(baseCost * (draft.focus.cost_mod || 1));
+
+        if (gameState.player.energy < finalCost) {
+            this.ui.showToast(`精力不足！(需要 ${finalCost})`, "error");
+            return;
+        }
+
+        // 确认对话
+        this.ui.showDialog({
+            title: "步骤 3/3: 确认交稿",
+            text: `消耗精力: ${finalCost}\n策略: ${draft.focus.name}\n\n确定要提交这一话吗？`,
+            choices: [
+                {
+                    text: "🚀 提交印厂！",
+                    action: () => {
+                        this.timeSystem.consumeEnergy(finalCost);
+                        
+                        // 调用修改后的计算逻辑，传入 draft 数据
+                        const result = this.mangaSystem.drawChapterWithStrategy(
+                            gameState.player.attributes,
+                            work,
+                            draft
+                        );
+
+                        this.handleDrawResult(result);
+                    }
+                },
+                { text: "再改改...", action: () => this.showAllocationMenu(work) }
+            ]
+        });
+    }
+
+    // 处理结果显示 (将原本 processDrawChapter 的后半部分提取出来)
+    handleDrawResult(result) {
+        // 更新金钱、粉丝、属性...
+        gameState.player.money += result.income;
+        gameState.player.fans += result.fans;
+        
+        // 增加熟练度
+        gameState.player.attributes.art += 0.5;
+        gameState.player.attributes.story += 0.5;
+        gameState.player.attributes.charm += 0.2;
+        
+        // 检查是否夺冠
+        let hasEvent = false;
+        if (result.isChampion) {
+            hasEvent = true;
+        }
+
+        // 如果没夺冠，检查是否触发随机事件
+        if (!hasEvent) {
+            // 传入 npcSystem 以支持修罗场/探班事件
+            const triggered = this.eventSystem.checkTriggers(gameState, 'work', this.ui, this.npcSystem);
+            if (triggered) {
+                hasEvent = true;
+            }
+        }
+        
+        // 检查是否触发日常工作事件
+        if (!hasEvent) {
+            const triggered = this.eventSystem.checkTriggers(gameState, 'daily_work', this.ui);
+            if (triggered) {
+                hasEvent = true;
+            }
+        }
+        
+        // 显示发布结果
+        let feedback = "";
+        if (result.isCriticalSuccess) feedback = "🔥 读者反响热烈！神回！";
+        else if (result.isCriticalFail) feedback = "💀 出现作画崩坏，被读者吐槽了...";
+        
+        // 生成完整的结果消息
+        let resultMsg = `《${result.title}》发布成功！\n\n`;
+        resultMsg += `📊 评分: ${result.score.toFixed(1)}\n`;
+        resultMsg += `💰 稿费: ${result.income}\n`;
+        resultMsg += `❤️ 新增粉丝: ${result.fans}\n\n`;
+        
+        // 添加画风协同效果
+        if (result.synergyMsg) resultMsg += `${result.synergyMsg}\n`;
+        // 添加剧情焦点效果
+        if (result.focusMsg) resultMsg += `${result.focusMsg}\n`;
+        // 添加特殊反馈
+        if (feedback) resultMsg += `\n${feedback}`;
+        
+        this.ui.showDialog({
+            title: "发布结果",
+            text: resultMsg,
+            choices: [{ text: "太好了", action: () => this.ui.closeDialog() }]
+        });
+        
+        this.ui.updateAll(gameState);
+    }
+
+    // 保留原有方法但不再使用
     processDrawChapter() {
         const work = gameState.mangaCareer.currentWork;
         // 获取当前题材的消耗，如果没有则默认 20
@@ -189,63 +424,106 @@ class Game {
             text: plotDescription,
             choices: [
                 {
-                    text: "开始绘制",
+                    text: "选择剧情焦点",
                     action: () => {
-                        // 2. 扣除精力
-                        this.timeSystem.consumeEnergy(cost);
+                        // 显示剧情焦点选择对话框
+                        this.ui.showDialog({
+                            title: "🎯 选择剧情焦点",
+                            text: "你想在这一话重点表现什么？",
+                            choices: this.mangaSystem.plotFocuses.map(focus => ({
+                                text: `${focus.name}\n${focus.desc}\n${this.getFocusEffectText(focus)}`,
+                                action: () => {
+                                    // 计算实际精力消耗
+                                    const actualCost = Math.floor(cost * focus.cost_mod);
+                                    
+                                    // 检查精力是否足够
+                                    if (gameState.player.energy < actualCost) {
+                                        this.ui.showToast(`精力不足！(需要 ${actualCost})`, "error");
+                                        this.ui.closeDialog();
+                                        return;
+                                    }
+                                    
+                                    // 扣除精力
+                                    this.timeSystem.consumeEnergy(actualCost);
 
-                        // 3. 执行绘制计算 (会返回 isChampion 标记)
-                        const result = this.mangaSystem.drawChapter(gameState.player.attributes);
-                        gameState.player.money += result.income;
-                        gameState.player.fans += result.fans;
+                                    // 执行绘制计算
+                                    const result = this.mangaSystem.drawChapter(gameState.player.attributes, focus);
+                                    gameState.player.money += result.income;
+                                    gameState.player.fans += result.fans;
 
-                        // 4. 增加熟练度
-                        gameState.player.attributes.art += 0.5;
-                        gameState.player.attributes.story += 0.5;
+                                    // 增加熟练度
+                                    gameState.player.attributes.art += 0.5;
+                                    gameState.player.attributes.story += 0.5;
 
-                        // 5. 显示基础收益提示
-                        let msg = `发布第 ${result.chapter} 话！人气+${result.fans} 💰+${result.income}`;
-                        // 如果有画风搭配评价，也显示出来
-                        if (result.synergyMsg) msg += `\n${result.synergyMsg}`;
+                                    // 显示基础收益提示
+                                    let msg = `发布第 ${result.chapter} 话！人气+${result.fans} 💰+${result.income}`;
+                                    // 如果有画风搭配评价，也显示出来
+                                    if (result.synergyMsg) msg += `\n${result.synergyMsg}`;
+                                    // 如果有剧情焦点效果，也显示出来
+                                    if (result.focusMsg) msg += `\n${result.focusMsg}`;
 
-                        this.ui.showToast(msg, result.synergyMsg && result.synergyMsg.includes('绝妙') ? 'success' : 'normal');
+                                    this.ui.showToast(msg, result.synergyMsg && result.synergyMsg.includes('绝妙') ? 'success' : 'normal');
 
-                        // ========================================================
-                        // 【核心修复】弹窗优先级逻辑 (防止庆祝/事件被秒关)
-                        // ========================================================
-                        let hasEvent = false;
+                                    // ========================================================
+                                    // 【核心修复】弹窗优先级逻辑 (防止庆祝/事件被秒关)
+                                    // ========================================================
+                                    let hasEvent = false;
 
-                        // A. 检查是否夺冠
-                        // 如果夺冠，MangaSystem 内部已经调用了 celebrateChampion 弹出了庆祝窗
-                        if (result.isChampion) {
-                            hasEvent = true;
-                        }
+                                    // A. 检查是否夺冠
+                                    // 如果夺冠，MangaSystem 内部已经调用了 celebrateChampion 弹出了庆祝窗
+                                    if (result.isChampion) {
+                                        hasEvent = true;
+                                    }
 
-                        // B. 如果没夺冠，检查是否触发随机事件 (如粉丝来信、修罗场)
-                        // checkTriggers 会返回 true/false，表示是否有事件弹窗被激活
-                        if (!hasEvent) {
-                            // 传入 npcSystem 以支持修罗场/探班事件
-                            const triggered = this.eventSystem.checkTriggers(gameState, 'work', this.ui, this.npcSystem);
-                            if (triggered) {
-                                hasEvent = true;
-                            }
-                        }
-                        
-                        // C. 检查是否触发日常工作事件
-                        if (!hasEvent) {
-                            const triggered = this.eventSystem.checkTriggers(gameState, 'daily_work', this.ui);
-                            if (triggered) {
-                                hasEvent = true;
-                            }
-                        }
+                                    // B. 如果没夺冠，检查是否触发随机事件 (如粉丝来信、修罗场)
+                                    // checkTriggers 会返回 true/false，表示是否有事件弹窗被激活
+                                    if (!hasEvent) {
+                                        // 传入 npcSystem 以支持修罗场/探班事件
+                                        const triggered = this.eventSystem.checkTriggers(gameState, 'work', this.ui, this.npcSystem);
+                                        if (triggered) {
+                                            hasEvent = true;
+                                        }
+                                    }
+                                    
+                                    // C. 检查是否触发日常工作事件
+                                    if (!hasEvent) {
+                                        const triggered = this.eventSystem.checkTriggers(gameState, 'daily_work', this.ui);
+                                        if (triggered) {
+                                            hasEvent = true;
+                                        }
+                                    }
 
-                        // C. 只有当什么都没发生时，才关闭当前的“连载管理”窗口
-                        // 如果发生了事件，我们保留那个事件的弹窗让玩家看
-                        if (!hasEvent) {
-                            this.ui.closeDialog();
-                        }
+                                    // C. 只有当什么都没发生时，才关闭当前的“连载管理”窗口
+                                    // 如果发生了事件，我们保留那个事件的弹窗让玩家看
+                                    if (!hasEvent) {
+                                        this.ui.closeDialog();
+                                    }
 
-                        this.ui.updateAll(gameState);
+                                    this.ui.updateAll(gameState);
+                                }
+                            })).concat([{
+                                text: "取消",
+                                action: () => {
+                                    // 返回上一个对话框
+                                    this.ui.closeDialog();
+                                    // 重新显示情节预览
+                                    this.ui.showDialog({
+                                        title: "情节预览",
+                                        text: plotDescription,
+                                        choices: [{
+                                            text: "选择剧情焦点",
+                                            action: () => {
+                                                this.ui.closeDialog();
+                                                this.processDrawChapter();
+                                            }
+                                        }, {
+                                            text: "返回",
+                                            action: () => this.ui.closeDialog()
+                                        }]
+                                    });
+                                }
+                            }])
+                        });
                     }
                 }
             ]

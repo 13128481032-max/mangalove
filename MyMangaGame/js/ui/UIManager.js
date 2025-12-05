@@ -145,7 +145,7 @@ export class UIManager {
 
   /**
      * 更新漫画连载面板
-     * (包含：折叠/展开功能、相性评价显示、历史记录)
+     * (直接显示所有内容：相性评价显示、历史记录)
      */
     updateMangaPanel(state) {
         // 1. 检查面板是否存在，不存在则创建
@@ -158,9 +158,6 @@ export class UIManager {
                 panel.style.marginTop = '15px';
                 panel.style.borderTop = '2px dashed #4A2C35';
                 
-                // 【核心】折叠状态标记 (默认为展开)
-                panel.dataset.expanded = "true";
-                
                 this.els.sidebar.appendChild(panel);
             } else {
                 return; // 找不到侧边栏，放弃渲染
@@ -170,27 +167,12 @@ export class UIManager {
         const career = state.mangaCareer;
         if (!career) return;
 
-        // 判断当前是展开还是折叠
-        const isExpanded = panel.dataset.expanded === "true";
-        const toggleText = isExpanded ? "收起" : "展开";
-        const toggleIcon = isExpanded ? "▼" : "▶";
-
-        // 2. 构建标题栏 (点击可切换)
+        // 2. 构建标题栏
         let html = `
-            <div onclick="document.getElementById('manga-panel').dataset.expanded = '${!isExpanded}'; window.game.ui.updateMangaPanel(window.gameState);" 
-                 style="cursor:pointer; padding:12px 0; display:flex; justify-content:space-between; align-items:center; user-select:none;">
-                <h3 style="margin:0; font-size:16px;">📖 连载状态</h3>
-                <span style="font-size:16px; color:#FF69B4; font-weight:bold; padding:4px 8px; border:1px solid #FF69B4; border-radius:4px;">${toggleIcon} ${toggleText}</span>
-            </div>
+            <h3 style="margin:0; font-size:16px; padding:12px 0;">📖 连载状态</h3>
         `;
 
-        // 如果是折叠状态，直接结束渲染，只显示标题
-        if (!isExpanded) {
-            panel.innerHTML = html;
-            return;
-        }
-
-        // --- 下面是展开时的详细内容 ---
+        // --- 直接显示所有详细内容 ---
 
         // 榜单信息
         const tierNames = [

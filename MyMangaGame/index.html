@@ -14,8 +14,13 @@
 
     <div id="game-container">
         
-        <aside class="sidebar panel">
-            <h2>👩‍🎨 个人档案</h2>
+        <aside class="sidebar panel" id="profile-sidebar">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>👩‍🎨 个人档案</h2>
+                <button id="btn-back" class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;">
+                    ← 返回
+                </button>
+            </div>
             
             <div class="stats-panel">
                 <div class="stat-row">
@@ -93,6 +98,10 @@
 
                     <button id="btn-rest" class="btn">
                         🛌 回家休息 (推进日期)
+                    </button>
+                    
+                    <button id="btn-profile" class="btn btn-secondary">
+                        👩‍🎨 个人档案
                     </button>
                 </div>
             </div>

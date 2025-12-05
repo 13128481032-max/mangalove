@@ -70,6 +70,42 @@ export class MangaSystem {
                 "{title}中的主角在日记中记录着自己最后的希望与绝望。"
             ]
         };
+        
+        // MangaSystem.js 构造函数内新增 
+        this.plotFocuses = [ 
+            { 
+                id: 'filler', 
+                name: '💧 划水过渡', 
+                desc: '省力的一话，单纯为了凑页数。', 
+                cost_mod: 0.5, // 精力消耗减半 
+                score_mod: 0.6, // 评分打折 
+                risk: 0 
+            }, 
+            { 
+                id: 'climax', 
+                name: '🔥 剧情高潮', 
+                desc: '主线剧情的重大转折！', 
+                cost_mod: 1.5, 
+                stat_bonus: { story: 1.5, art: 0.8 }, // 剧情分大增，画工略降（因为太赶） 
+                risk: 0.2 // 20% 概率崩坏 
+            }, 
+            { 
+                id: 'fanservice', 
+                name: '！狗血情节', 
+                desc: '虽然俗套但是读者爱看。', 
+                cost_mod: 1.0, 
+                stat_bonus: { charm: 2.0, story: 0.5 }, // 魅力大增，剧情无脑 
+                fans_mod: 1.5 // 涨粉倍率 
+            }, 
+            { 
+                id: 'cliffhanger', 
+                name: '🎣 恶意断章', 
+                desc: '卡在最关键的地方结束！', 
+                cost_mod: 1.2, 
+                stat_bonus: { story: 1.2 }, 
+                effect: 'retention' // 特殊效果：下一话基础热度提升 
+            } 
+        ];
     }
 
     async init() {
@@ -129,13 +165,13 @@ export class MangaSystem {
         return gameState.mangaCareer.currentWork;
     }
 
-    drawChapter(attributes) {
+    drawChapter(attributes, focus = null) {
         const work = gameState.mangaCareer.currentWork;
         if (!work) return null;
 
         work.chapter += 1;
 
-        const result = this.calculateChapterScore(attributes, work.genreId, work.styleId);
+        const result = this.calculateChapterScore(attributes, work.genreId, work.styleId, focus);
         
         work.totalScore += result.score;
         work.maxIncom = Math.max(work.maxIncom, result.income);
@@ -151,16 +187,172 @@ export class MangaSystem {
         };
     }
 
-    calculateChapterScore(attributes, genreId, styleId) {
+    drawChapterWithStrategy(playerAttributes, work, draft) {
+        if (!work) return null;
+        
+        work.chapter += 1;
+        
+        const genre = this.genres[work.genreId];
+        const style = this.styles[work.styleId];
+        const focus = draft.focus;
+        
+        // 1. 基础分计算：(玩家属性 + 投入的灵感点数) * 题材权重
+        const artScore = (playerAttributes.art + draft.allocated.art) * (genre.weights.art || 0.5);
+        const storyScore = (playerAttributes.story + draft.allocated.story) * (genre.weights.story || 0.5);
+        const charmScore = ((playerAttributes.charm || 5) + draft.allocated.charm) * (genre.weights.charm || 0.2);
+        
+        let totalScore = artScore + storyScore + charmScore;
+        
+        // 2. 应用策略修正 (Plot Focus)
+        if (focus.stat_bonus) {
+            if (focus.stat_bonus.art) totalScore *= focus.stat_bonus.art;
+            if (focus.stat_bonus.story) totalScore *= focus.stat_bonus.story;
+            if (focus.stat_bonus.charm) totalScore *= focus.stat_bonus.charm;
+        }
+        totalScore *= (focus.score_mod || 1);
+        
+        // 3. 画风契合度修正
+        let synergyMult = 1.0;
+        let synergyMsg = "";
+        
+        if (style.good_for && style.good_for.includes(work.genreId)) {
+            synergyMult = 1.3;
+            synergyMsg = "🔥 绝妙搭配！";
+        } else if (style.bad_for && style.bad_for.includes(work.genreId)) {
+            synergyMult = 0.7;
+            synergyMsg = "💀 灾难般的组合...";
+        }
+        
+        totalScore *= synergyMult;
+
+        // 4. 随机波动与暴击 (Risk check)
+        let isCriticalSuccess = false;
+        let isCriticalFail = false;
+        
+        const roll = Math.random();
+        if (focus.risk && roll < focus.risk) {
+            totalScore *= 0.6; // 崩坏
+            isCriticalFail = true;
+        } else if (roll > 0.9) {
+            totalScore *= 1.5; // 暴击
+            isCriticalSuccess = true;
+        }
+
+        // 5. 收入与粉丝计算
+        const fansMult = focus.fans_mod || 1;
+        const income = Math.floor(totalScore * 5); // 简化公式
+        const fans = Math.floor(totalScore * 0.5 * fansMult);
+
+        // 更新作品总分
+        work.totalScore += totalScore;
+        work.maxIncom = Math.max(work.maxIncom, income);
+        
+        // 排名计算
+        const isChampion = this.updateRanking(work.totalScore);
+
+        // 获取当前排名
+        const rank = gameState.mangaCareer.currentRank || '无';
+
+        // 生成剧情焦点效果消息
+        let focusMsg = `策略: ${focus.name}`;
+        if (focus.stat_bonus) {
+            focusMsg += " (";
+            const bonuses = [];
+            if (focus.stat_bonus.art) bonuses.push(`画功 x${focus.stat_bonus.art}`);
+            if (focus.stat_bonus.story) bonuses.push(`编剧 x${focus.stat_bonus.story}`);
+            if (focus.stat_bonus.charm) bonuses.push(`魅力 x${focus.stat_bonus.charm}`);
+            focusMsg += bonuses.join(", ") + ")";
+        }
+
+        return {
+            chapter: work.chapter,
+            title: `《${work.title}》第 ${work.chapter} 话`,
+            score: totalScore,
+            rank: rank,
+            income,
+            fans,
+            synergyMsg,
+            focusMsg,
+            isChampion,
+            isCriticalSuccess,
+            isCriticalFail
+        };
+    }
+
+    calculateChapterScore(attributes, genreId, styleId, focus = null) {
         let genre = this.genres[genreId] || Object.values(this.genres)[0];
         let style = this.styles[styleId] || this.styles['standard'];
         
         const w = genre.weights || { art: 0.5, story: 0.5, charm: 0 };
-        let baseScore = (attributes.art * w.art) + (attributes.story * w.story) + (attributes.charm * (w.charm || 0));
         
+        // 计算带剧情焦点效果的属性值
+        let effectiveAttributes = { ...attributes };
+        let focusMsg = "";
+        let finalScore;
+        
+        // 检查并应用上一话的焦点效果
+        const chapter = gameState.mangaCareer.currentWork ? gameState.mangaCareer.currentWork.chapter : 0;
+        let retentionBonus = 1.0;
+        
+        if (gameState.mangaCareer.focusEffects) {
+            const currentEffects = gameState.mangaCareer.focusEffects;
+            for (let i = currentEffects.length - 1; i >= 0; i--) {
+                const effect = currentEffects[i];
+                if (effect.type === 'retention' && effect.chapter === chapter) {
+                    retentionBonus = effect.value;
+                    focusMsg += `🔥 上话断章效果！热度提升 ${(retentionBonus - 1) * 100}%\n`;
+                    // 移除已使用的效果
+                    currentEffects.splice(i, 1);
+                    break;
+                }
+            }
+        }
+        
+        // 应用剧情焦点效果
+        if (focus) {
+            focusMsg = `📌 ${focus.name}：`;
+            
+            // 应用属性加成
+            if (focus.stat_bonus) {
+                Object.keys(focus.stat_bonus).forEach(stat => {
+                    if (effectiveAttributes[stat]) {
+                        effectiveAttributes[stat] *= focus.stat_bonus[stat];
+                    }
+                });
+                focusMsg += "属性调整已应用，";
+            }
+            
+            // 计算基础分数
+            let baseScore = (effectiveAttributes.art * w.art) + (effectiveAttributes.story * w.story) + (effectiveAttributes.charm * (w.charm || 0));
+            
+            // 应用评分加成/折扣
+            let scoreMod = focus.score_mod || 1.0;
+            
+            // 应用随机因子
+            const randomFactor = 0.8 + Math.random() * 0.4;
+            
+            // 应用风险因素
+            let riskFactor = 1.0;
+            if (focus.risk && Math.random() < focus.risk) {
+                riskFactor = 0.5; // 崩坏时分数减半
+                focusMsg += "但剧情崩坏了！";
+            } else {
+                if (focus.risk > 0) {
+                    focusMsg += "成功规避风险，";
+                }
+            }
+            
+            finalScore = baseScore * scoreMod * randomFactor * riskFactor;
+        } else {
+            // 没有选择剧情焦点时的默认计算
+            finalScore = (attributes.art * w.art) + (attributes.story * w.story) + (attributes.charm * (w.charm || 0));
+            finalScore *= (0.8 + Math.random() * 0.4); // 随机因子
+        }
+        
+        // 应用画风协同效果
         let synergyMult = 1.0;
-        let synergyMsg = ""; 
-
+        let synergyMsg = "";
+ 
         if (style.good_for && style.good_for.includes(genreId)) {
             synergyMult = 1.5; 
             synergyMsg = "🔥 绝妙搭配！";
@@ -168,17 +360,46 @@ export class MangaSystem {
             synergyMult = 0.6; 
             synergyMsg = "💀 灾难般的组合...";
         }
-
-        const randomFactor = 0.8 + Math.random() * 0.4;
-        const finalScore = baseScore * synergyMult * randomFactor;
         
-        const chapter = gameState.mangaCareer.currentWork ? gameState.mangaCareer.currentWork.chapter : 0;
+        finalScore *= synergyMult;
+        
+        // 计算章节加成 - 使用已声明的chapter变量
         const bonus = 1 + (chapter * 0.02);
         
-        const income = Math.floor((genre.base_income || 50) * (finalScore / 10) * bonus);
-        const fans = Math.floor((genre.base_fans || 5) * (finalScore / 10) * bonus);
+        // 计算收入和粉丝增长，应用留存效果
+        let income = Math.floor((genre.base_income || 50) * (finalScore / 10) * bonus * retentionBonus);
+        let fans = Math.floor((genre.base_fans || 5) * (finalScore / 10) * bonus * retentionBonus);
+        
+        // 应用剧情焦点的粉丝增长加成
+        if (focus && focus.fans_mod) {
+            fans = Math.floor(fans * focus.fans_mod);
+            focusMsg += "粉丝增长加速！";
+        }
+        
+        // 应用剧情焦点的特殊效果
+        if (focus && focus.effect) {
+            if (focus.effect === 'retention') {
+                // 特殊效果：下一话基础热度提升
+                // 这里可以在游戏状态中记录这个效果
+                if (!gameState.mangaCareer.focusEffects) {
+                    gameState.mangaCareer.focusEffects = [];
+                }
+                gameState.mangaCareer.focusEffects.push({ type: 'retention', chapter: chapter + 1, value: 1.2 });
+                focusMsg += "下一话热度提升！";
+            }
+        }
+        
+        // 清理剧情焦点效果文本
+        if (focusMsg.endsWith("：, ")) {
+            focusMsg = focusMsg.replace("：, ", "：");
+        } else if (focusMsg.endsWith(", ")) {
+            focusMsg = focusMsg.slice(0, -2);
+        }
 
-        return { score: finalScore, income, fans, synergyMsg };
+        // 获取当前排名
+        const rank = gameState.mangaCareer.currentRank || '无';
+        
+        return { score: finalScore, income, fans, synergyMsg, focusMsg, rank };
     }
 
     endSerialization() {
