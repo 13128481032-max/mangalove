@@ -642,11 +642,12 @@ h3 {
         z-index: 1000;
         flex-direction: column;
         justify-content: flex-start;
-        padding: 20px;
+        padding: 20px 20px 100px; /* 增加底部内边距避免被按钮遮挡 */
         background-color: rgba(255, 240, 245, 0.98);
         backdrop-filter: blur(5px);
         box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
         animation: slideIn 0.3s ease-out;
+        overflow-y: auto; /* 允许内容滚动 */
     }
     
     #profile-sidebar.show-profile {
