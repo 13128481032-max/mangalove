@@ -8,7 +8,7 @@
 // 1. 游戏配置常量 (Configuration Constants)
 // ==========================================
 export const gameConfig = {
-    MAX_DAYS: 180,           // 只有半年的时间证明自己 
+    MAX_DAYS: 100,           // 只有100天的时间证明自己 
     GOAL_FANS: 50000,        // 目标：5万粉丝（一周目很难达到） 
     GOAL_MONEY: 100000,      // 目标：赚10万 
     INHERIT_RATE: 0.1        // 二周目继承 10% 的金钱 
@@ -91,7 +91,7 @@ const initialState = {
 
     // --- 游戏时间与环境 ---
     world: {
-        day: 1,             // 第几天
+        date: 1,            // 第几天
         dateStr: "1月1日",  // 显示用日期
         weather: "sunny",   // 天气
         location: "home"    // home, park, cafe, basement
@@ -120,7 +120,10 @@ const initialState = {
     achievements: [],
     
     // --- 结局历史 ---
-    endingsUnlock: []
+    endingsUnlock: [],
+    
+    // --- 游戏日志 ---
+    logs: []
 };
 
 // ==========================================
@@ -258,5 +261,33 @@ export function deleteSave(slotId) {
     }
 }
 
+/**
+ * 记录游戏事件到日志
+ * @param {string} type - 事件类型 (如: 'manga', 'npc', 'event', 'system')
+ * @param {string} message - 事件描述
+ * @param {Object} data - 可选的附加数据
+ */
+export function logEvent(type, message, data = {}) {
+    const logEntry = {
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        type: type,
+        message: message,
+        day: gameState.world?.date || 1,
+        timestamp: new Date().toLocaleString(),
+        data: data
+    };
+    
+    // 添加到日志数组
+    gameState.logs.push(logEntry);
+    
+    // 限制日志数量，只保留最近的100条
+    if (gameState.logs.length > 100) {
+        gameState.logs.shift();
+    }
+    
+    console.log(`[GameLog] ${type}: ${message}`, data);
+}
+
 // 挂载到 window 方便调试
 window.gameState = gameState;
+window.logEvent = logEvent;

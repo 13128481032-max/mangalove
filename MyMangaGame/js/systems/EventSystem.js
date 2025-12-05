@@ -391,6 +391,20 @@ export class EventSystem {
             gameState.flags['is_confined'] = true;
             document.body.classList.add('mode-confined');
             ui.showToast("你失去了自由...");
+        } else if (effects.status === 'rescued') {
+            // 被解救状态
+            gameState.flags['is_confined'] = false;
+            document.body.classList.remove('mode-confined');
+            ui.showToast("你被解救了！");
+            // 记录日志
+            if (window.logEvent) {
+                window.logEvent('system', '你成功从囚禁中被解救', gameState.player.date);
+            }
+        } else if (effects.status === 'normal') {
+            // 恢复正常状态
+            gameState.flags['is_confined'] = false;
+            document.body.classList.remove('mode-confined');
+            ui.showToast("生活恢复正常。");
         }
 
         // 更新 UI

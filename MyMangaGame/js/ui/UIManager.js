@@ -46,6 +46,9 @@ export class UIManager {
         
         // 自动初始化飘字提示容器
         this.initToastContainer();
+        
+        // 初始化日志功能
+        this.initLogs();
     }
     
     /**
@@ -78,6 +81,10 @@ export class UIManager {
             // --- 剧情对话框 (覆盖层) ---
             dialogOverlay: document.getElementById('dialogue-overlay'),
             
+            // --- 日志功能 ---
+            logsContainer: document.getElementById('logs-container'),
+            btnClearLogs: document.getElementById('btn-clear-logs'),
+            
             // --- 提示容器 (动态生成) ---
             toastContainer: null // 将在initToastContainer中初始化
         };
@@ -100,6 +107,7 @@ export class UIManager {
         this.updateStats(state);
         this.updateNPCs(state);
         this.updateMangaPanel(state); // 更新漫画连载面板
+        this.updateLogs(state); // 更新游戏日志
     }
 
     // ============================================================
@@ -258,6 +266,54 @@ export class UIManager {
     }
 
 // ============================================================
+    // 3.5 游戏日志更新
+    // ============================================================
+    updateLogs(state) {
+        const container = this.els.logsContainer;
+        if (!container) return;
+
+        const logs = state.logs || [];
+        
+        if (logs.length === 0) {
+            container.innerHTML = `<div style="color: #999; text-align: center;">暂无日志记录</div>`;
+            return;
+        }
+
+        // 按时间倒序排列日志
+        const sortedLogs = [...logs].sort((a, b) => b.id - a.id);
+
+        // 渲染日志条目
+        container.innerHTML = sortedLogs.map(log => {
+            // 根据日志类型设置不同的颜色
+            let typeColor = '#666';
+            switch (log.type) {
+                case 'manga':
+                    typeColor = '#FF69B4'; // 粉色 - 漫画相关
+                    break;
+                case 'npc':
+                    typeColor = '#4A90E2'; // 蓝色 - NPC相关
+                    break;
+                case 'event':
+                    typeColor = '#F5A623'; // 橙色 - 事件相关
+                    break;
+                case 'system':
+                    typeColor = '#7ED321'; // 绿色 - 系统相关
+                    break;
+            }
+
+            return `
+                <div style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed #eee;">
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <span style="color: ${typeColor}; font-weight: bold; font-size: 10px;">[${log.type}]</span>
+                        <span style="color: #999; font-size: 10px;">第${log.day}天</span>
+                    </div>
+                    <div style="margin-left: 5px;">${log.message}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // ============================================================
     // 4. NPC 列表渲染 (修复头像显示)
     // ============================================================
     updateNPCs(state) {
@@ -297,6 +353,20 @@ export class UIManager {
             // 【核心修复】生成头像 URL (兼容旧存档)
             const avatarUrl = npc.avatar || `https://api.dicebear.com/9.x/pixel-art/svg?seed=${npc.name}`;
 
+            // 判断是否被锁定
+            const isLocked = (state.flags && state.flags.route === 'confined' && npc.relation !== 'brother');
+            
+            // 如果被锁定，按钮样式变灰，且文字变化
+            let btnStyle = 'width:100%; padding: 6px;';
+            let btnText = '💬 互动';
+            let btnClass = 'btn npc-interact-btn';
+
+            if (isLocked) {
+                btnStyle += '; background:#EEE; color:#AAA; border-color:#DDD; cursor:not-allowed;';
+                btnText = '🚫 无法接触';
+                // 注意：这里我们依然保留onclick事件，为了触发"哥哥看着你"的飘字提示
+            }
+
             // 【修改】重新加入了头像布局
             card.innerHTML = `
                 <div class="npc-header" style="display:flex; align-items:center; gap:10px;">
@@ -305,7 +375,7 @@ export class UIManager {
                     </div>
                     
                     <div style="flex:1;">
-                        <div style="font-weight:bold; font-size:16px;">${npc.name}</div>
+                        <div style="font-weight:bold; font-size:16px; ${isLocked ? 'color:#AAA' : ''};">${npc.name}</div>
                         ${statusTag}
                     </div>
                 </div>
@@ -321,9 +391,9 @@ export class UIManager {
                     }
                 </div>
                 
-                <button class="btn npc-interact-btn" style="width:100%; padding: 6px;" 
+                <button class="${btnClass}" style="${btnStyle}" 
                     data-npc-id="${npc.id}">
-                    💬 互动
+                    ${btnText}
                 </button>
             `;
             
@@ -801,6 +871,24 @@ export class UIManager {
     // ============================================================
     // 6. 飘字提示系统 (Toast)
     // ============================================================
+    // ============================================================
+    // 初始化日志功能
+    // ============================================================
+    initLogs() {
+        // 绑定清空日志按钮事件
+        if (this.els.btnClearLogs) {
+            this.els.btnClearLogs.addEventListener('click', () => {
+                // 清空游戏状态中的日志
+                if (window.gameState) {
+                    window.gameState.logs = [];
+                    // 更新UI
+                    this.updateLogs(window.gameState);
+                    this.showToast('日志已清空', 'success');
+                }
+            });
+        }
+    }
+
     initToastContainer() {
         let container = document.getElementById('toast-container');
         if (!container) {

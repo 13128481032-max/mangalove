@@ -1086,6 +1086,25 @@ class Game {
             return;
         }
 
+        // ============================================================
+        // 【新增逻辑】骨科监禁状态下的拦截
+        // ============================================================
+        if (gameState.flags && gameState.flags.route === 'confined') {
+            // 如果互动的对象不是哥哥
+            if (npc.relation !== 'brother') {
+                // 播放震动或恐怖音效（可选）
+                if (navigator.vibrate) navigator.vibrate(200);
+                
+                // 弹出提示：哥哥正在看着你
+                this.ui.showToast("👁️ 哥哥正在看着你...", "error");
+                
+                // 在控制台输出
+                console.log("Interaction blocked by Brother.");
+                return; // 直接终止，不执行后续互动逻辑
+            }
+        }
+        // ============================================================
+
         console.log(`👥 找到NPC: ${npc.name}, 状态: ${npc.status}`);
         // 如果已经被他囚禁了，显示特殊菜单
         if (npc.status === 'imprisoned') {
@@ -1104,7 +1123,7 @@ class Game {
 
         // 正常菜单
         console.log(`💬 准备显示互动对话框 - 角色: ${npc.name}`);
-        const choices = [
+        let choices = [
             {
                 text: "💬 闲聊 (精力-5)",
                 action: () => this.triggerRandomChatEvent(npc, 5, 0)
@@ -1115,9 +1134,37 @@ class Game {
             {
                 text: "💔 断联/分手 (危险!)",
                 action: () => this.actionBreakContact(npc)
-            },
-            { text: "关闭", action: () => this.ui.closeDialog() }
+            }
         ];
+
+        // 为哥哥添加特殊选项：邀请做模特
+        if (npc.relation === 'brother') {
+            choices.push({
+                text: "🎨 邀请当漫画模特 (精力-10, 艺术+5)",
+                action: () => {
+                    // 检查好感度和理智值条件
+                    if (npc.stats.affection > 100 && npc.stats.restraint < 50) {
+                        // 满足条件，触发事件
+                        gameState.player.energy -= 10;
+                        gameState.player.attributes.art += 5;
+                        this.startFixedEvent(fixedNPCs.brother.events.art_model, npc);
+                        this.ui.updateAll(gameState);
+                    } else {
+                        // 不满足条件，显示拒绝提示
+                        gameState.player.energy -= 5; // 消耗少量精力
+                        this.ui.showDialog({
+                            title: "沈清舟",
+                            text: "他推了推眼镜，眼神恢复了往常的清冷。\n\"抱歉，我现在没有时间。\"",
+                            choices: [{ label: "好的", action: () => this.ui.closeDialog() }]
+                        });
+                        this.ui.updateAll(gameState);
+                    }
+                }
+            });
+        }
+
+        // 添加关闭选项
+        choices.push({ text: "关闭", action: () => this.ui.closeDialog() });
 
         // 显示骨科NPC的特殊状态信息
         let statusText = '';
@@ -1668,18 +1715,45 @@ class Game {
             return;
         }
 
-        // 2. 检查是否触发【理智崩坏结局】
+        // 2. 检查是否触发【生病探视】
+        if (gameState.player.energy < 10 && !gameState.flags['brother_sick_visit']) {
+            this.startFixedEvent(fixedNPCs.brother.events.sick_visit, brother);
+            gameState.flags['brother_sick_visit'] = true;
+            return;
+        }
+
+        // 3. 检查是否触发【理智崩坏结局】
         if (brother.stats.restraint <= 0 && !gameState.flags['brother_ending_triggered']) {
             this.startFixedEvent(fixedNPCs.brother.events.entangled_fate, brother);
             gameState.flags['brother_ending_triggered'] = true;
             return;
         }
 
-        // 3. 检查【修罗场】(假设当前在和别人约会)
+        // 4. 检查【修罗场·雨夜】
         if (this.currentDatingTarget && this.currentDatingTarget.id !== brother.id) {
             // 30% 概率触发雨夜对峙
             if (Math.random() < 0.3) {
                 this.startFixedEvent(fixedNPCs.brother.events.rainy_confrontation, brother);
+            }
+        }
+
+        // 5. 检查【破冰】
+        if (brother.stats.restraint > 30 && brother.stats.restraint < 80 && 
+            brother.stats.affection > 70 && !gameState.flags['brother_melting_ice']) {
+            // 20% 概率在深夜触发
+            if (Math.random() < 0.2) {
+                this.startFixedEvent(fixedNPCs.brother.events.melting_ice, brother);
+                gameState.flags['brother_melting_ice'] = true;
+            }
+        }
+
+        // 6. 检查【诀别】
+        if (brother.stats.restraint > 30 && gameState.player.money > 10000 && 
+            !gameState.flags['brother_farewell_tears']) {
+            // 10% 概率触发，当女主经济独立且哥哥理智尚存时
+            if (Math.random() < 0.1) {
+                this.startFixedEvent(fixedNPCs.brother.events.farewell_tears, brother);
+                gameState.flags['brother_farewell_tears'] = true;
             }
         }
     }

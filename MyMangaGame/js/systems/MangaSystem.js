@@ -215,6 +215,16 @@ export class MangaSystem {
             startTime: gameState.world.date
         };
 
+        // 记录新连载开始日志
+        if (window.logEvent) {
+            window.logEvent('manga', `开始新连载《${gameState.mangaCareer.currentWork.title}》 (${genre ? genre.name : "未知"})`, 
+                gameState.world.date, {
+                    genre: genre ? genre.name : "未知",
+                    style: style ? style.name : "未知",
+                    synergy: synergyLabel
+                });
+        }
+
         return gameState.mangaCareer.currentWork;
     }
 
@@ -259,7 +269,7 @@ export class MangaSystem {
         
         let totalScore = artScore + storyScore + charmScore;
         
-        // 2. 应用策略修正 (Plot Focus)
+        // 应用策略修正 (Plot Focus)
         if (focus.stat_bonus) {
             if (focus.stat_bonus.art) totalScore *= focus.stat_bonus.art;
             if (focus.stat_bonus.story) totalScore *= focus.stat_bonus.story;
@@ -321,6 +331,21 @@ export class MangaSystem {
             if (focus.stat_bonus.story) bonuses.push(`编剧 x${focus.stat_bonus.story}`);
             if (focus.stat_bonus.charm) bonuses.push(`魅力 x${focus.stat_bonus.charm}`);
             focusMsg += bonuses.join(", ") + ")";
+        }
+
+        // 记录章节发布日志
+        if (window.logEvent) {
+            const feedback = isCriticalSuccess ? "🔥 神回！" : isCriticalFail ? "💀 作画崩坏" : "";
+            const message = `发布《${work.title}》第 ${work.chapter} 话 ${feedback}`;
+            
+            window.logEvent('manga', message, gameState.world.date, {
+                chapter: work.chapter,
+                score: totalScore,
+                income: income,
+                fans: fans,
+                rank: rank,
+                isChampion: isChampion
+            });
         }
 
         return {
@@ -477,6 +502,16 @@ export class MangaSystem {
         
         if (!gameState.mangaCareer.history) gameState.mangaCareer.history = [];
         gameState.mangaCareer.history.unshift(historyItem);
+        
+        // 记录漫画完结日志
+        if (window.logEvent) {
+            window.logEvent('manga', `完结漫画《${work.title}》，最终评价：${finalRank}`, gameState.world.date, {
+                chapters: work.chapter,
+                totalScore: work.totalScore,
+                finalRank: finalRank
+            });
+        }
+        
         gameState.mangaCareer.currentWork = null;
         return historyItem;
     }

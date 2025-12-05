@@ -105,20 +105,6 @@
       "title": "午夜霓虹",
       "text": "深夜的便利店门口，一个满身酒气的男人靠了过来。\n{npc_name}: “美丽的小姐，能借个火吗？”\n他虽然笑着，那双桃花眼里却看不到一丝醉意。",
       "choices": [{ "text": "我不抽烟...", "effects": { "charm": 1 } }]
-    },
-    {
-      "id": "first_meet_stoic",
-      "trigger": "special",
-      "title": "冰山一角",
-      "text": "你在美术馆临摹名画时，不小心挡住了一个人的视线。\n{npc_name}: “……让开。”\n男人穿着考究的三件套西装，眼神清冷，仿佛在看一团空气。",
-      "choices": [{ "text": "不好意思(赶紧挪开)", "effects": { "art": 1 } }]
-    },
-    {
-      "id": "first_meet_flirty",
-      "trigger": "special",
-      "title": "午夜霓虹",
-      "text": "深夜的便利店门口，一个满身酒气的男人靠了过来。\n{npc_name}: “美丽的小姐，能借个火吗？”\n他虽然笑着，那双桃花眼里却看不到一丝醉意。",
-      "choices": [{ "text": "我不抽烟...", "effects": { "charm": 1 } }]
     }
   ],
 
@@ -240,9 +226,32 @@
         "trigger": "gloomy_chain",
         "text": "醒来时发现脚踝上扣着锁链。房间里贴满了你的画稿照片。\n{npc_name} 端着粥走进来：\"乖，吃饭了。今天也不许出去哦。\"",
         "choices": [
-          { "text": "打翻碗（反抗）", "effect": "punish" },
-          { "text": "乖乖吃饭（顺从）", "effect": "affection_up" }
+            { "text": "打翻碗（反抗）", "effect": "punish" },
+            { "text": "乖乖吃饭（顺从）", "effect": "affection_up" }
         ]
+      },
+      {
+        "id": "rescue_attempt",
+        "trigger": "gloomy_chain",
+        "text": "被囚禁的第三天，窗外传来了细微的声响。\n\"砰砰——\"是有人在敲窗户！\n\"别出声！我们是来救你的！\"窗外传来一个陌生的声音。\n{npc_name}的脚步声从楼下传来...",
+        "choices": [
+            { "text": "悄悄移动到窗户边", "next_event": "rescue_success" },
+            { "text": "留在原地不动", "effect": "affection_up" }
+        ]
+      },
+      {
+        "id": "rescue_success",
+        "trigger": "gloomy_chain",
+        "text": "你小心翼翼地移动到窗户边。窗外是几个警察和你失踪前见过的邻居。\n\"我们接到了报案！\"为首的警察小声说道，\"我们会把你救出去的。\"\n他们迅速打开了窗户，剪断了你的锁链。\n{npc_name}推开门的瞬间，警察已经冲了进来...",
+        "effects": { "status": "rescued" },
+        "next_event": "back_to_normal"
+      },
+      {
+        "id": "back_to_normal",
+        "trigger": "gloomy_chain",
+        "title": "重获自由",
+        "text": "{npc_name}被警察带走了。你终于重获自由。\n经历了这次可怕的事件，你决定重新振作起来，继续追逐你的漫画梦想。\n虽然这段经历让你心有余悸，但也让你更加珍惜自由和正常的生活。",
+        "effects": { "status": "normal" }
       }
     ]
   },

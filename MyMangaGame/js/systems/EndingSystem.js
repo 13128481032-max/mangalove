@@ -5,8 +5,13 @@ import { fixedNPCs } from '../data/fixed_npcs.js';
 export class EndingSystem {
     
     checkEnding() {
-        // 1. 检查是否时间耗尽
-        if (gameState.gameTime.day > gameConfig.MAX_DAYS) {
+        // 1. 检查是否破产 (余额低于-100)
+        if (gameState.player.money < -100) {
+            this.triggerBankruptcyEnding();
+            return true;
+        }
+        // 2. 检查是否时间耗尽
+        if (gameState.world.date > gameConfig.MAX_DAYS) {
             this.triggerEnding();
             return true;
         }
@@ -69,6 +74,13 @@ export class EndingSystem {
         }
 
         this.showEndingScreen(endingTitle, endingDesc, endingType);
+    }
+
+    // 破产结局
+    triggerBankruptcyEnding() {
+        const endingTitle = "破产边缘 (Bad Ending)";
+        const endingDesc = "你的存款已经见底，房东将你赶了出去。\n\n当你拖着行李箱站在街头时，父亲的秘书出现在你面前。\n\"少爷让我来接您回去。\"\n\n你失去了追求梦想的机会，被迫接受了家族安排的联姻。";
+        this.showEndingScreen(endingTitle, endingDesc, "bad");
     }
 
     showEndingScreen(title, text, type) {

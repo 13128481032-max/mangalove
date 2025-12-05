@@ -90,17 +90,58 @@ export class TimeSystem {
             gameState.player.money -= rent;
             report.events.push(`💸 **周结日**：扣除房租和生活费 ¥${rent}`);
             
+            // 记录周结日志
+            if (window.logEvent) {
+                window.logEvent('system', `周结日：扣除房租和生活费 ¥${rent}`, currentDay, { rent: rent });
+            }
+            
             // 修正一下显示：因为刚刚扣了钱，所以上面的 money 变动应该把这笔钱排除，或者包含进去？
             // 这种写法是把房租算在“之后”发生。
             
             if (gameState.player.money < 0) {
                 report.events.push("⚠️ **警告**：你的存款已为负数！即将面临破产！");
+                
+                // 记录破产警告日志
+                if (window.logEvent) {
+                    window.logEvent('event', '存款已为负数！即将面临破产！', currentDay, { money: gameState.player.money });
+                }
             }
         }
 
         console.log(`[TimeSystem] 结算完毕，进入第 ${gameState.world.date} 天`);
         
-        // 6. 为明天重新拍快照
+        // 6. 保存报告数据到世界状态（用于调试和存档）
+        // gameState.world.dailyReports = gameState.world.dailyReports || [];
+        // gameState.world.dailyReports.push(report);
+        
+        // 7. 记录日常日志
+        if (window.logEvent && this.dailySnapshot) {
+            // 记录基本属性变化
+            const changes = report.changes;
+            const changeMessages = [];
+            
+            if (changes.money !== 0) {
+                changeMessages.push(`金钱${changes.money > 0 ? '+' : ''}${changes.money}`);
+            }
+            if (changes.fans !== 0) {
+                changeMessages.push(`粉丝${changes.fans > 0 ? '+' : ''}${changes.fans}`);
+            }
+            if (changes.art !== 0) {
+                changeMessages.push(`艺术${changes.art > 0 ? '+' : ''}${changes.art}`);
+            }
+            if (changes.story !== 0) {
+                changeMessages.push(`故事${changes.story > 0 ? '+' : ''}${changes.story}`);
+            }
+            if (changes.charm !== 0) {
+                changeMessages.push(`魅力${changes.charm > 0 ? '+' : ''}${changes.charm}`);
+            }
+            
+            if (changeMessages.length > 0) {
+                window.logEvent('system', `日常变化：${changeMessages.join(', ')}`, currentDay, changes);
+            }
+        }
+        
+        // 8. 为明天重新拍快照
         this.startNewDay();
 
         return report;
